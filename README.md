@@ -7,7 +7,25 @@
 </p>
 
 ## Challenge Description
-%%TODO%%
+
+The [ACM RecSys Challenge 2026](https://recsys.acm.org/recsys26/challenge/) targets **conversational music recommendation**. Using the [TalkPlayData-Challenge dataset](https://huggingface.co/collections/talkpl-ai/talkplay-data-challenge), the goal is to build a system capable of navigating user tastes through multi-turn dialogues, rather than simply providing static ranked lists.
+
+At every dialogue turn, participants must simultaneously solve a dual task:
+
+* **Recommendation:** Retrieve and rank the top 20 tracks from a catalog of 47,071 items, which are enriched with metadata and multimodal embeddings.
+* **Response Generation:** Generate a natural language response to justify the recommendations and maintain the conversational flow.
+
+**Dataset & Evaluation**
+
+The TalkPlayData-Challenge dataset contains 16,199 sessions made of 8 turns each, gathered from 8,772 users, for a total of 388,776 turns. To test generalization, models are evaluated on two hidden splits: Blind-A and Blind-B.
+
+Submissions are evaluated through an official composite score defined as a weighted sum of four specific metrics:
+* **50% - nDCG@20**: Measures ranking accuracy against the ground-truth tracks.
+* **10% - Catalog Diversity**: Evaluates the variety of the recommended items.
+* **10% - Lexical Diversity**: Measures vocabulary variation in the generated responses.
+* **30% - LLM-Judge**: Uses Gemini 3.1 to assess explanation quality and personalization.
+
+*The final leaderboard is computed on the score obtained on the Blind-B set*.
 
 ## Team members
 
@@ -29,8 +47,22 @@ We worked under the supervision of:
 * **[Michael Benigni](https://github.com/Michael-Benigni)** (PhD student)
 * **[Andrea Pisani](https://github.com/andreapisa9)** (PhD student)
 
+
 ## Final Model
-%%TODO%%
+
+Our final submission is based on a **multi-stage pipeline** designed to effectively tackle **both the track ranking and the natural language generation tasks**. This configuration allows us to maximize performance across all target metrics without the need for tradeoff optimization.
+
+The pipeline combines:
+* A **retrieve-fuse-rerank architecture** for high-precision track ranking.
+* A **local Large Language Model (LLM)** pipeline for conversational response generation.
+
+Specifically, our system consists of the following modules:
+* **Candidate Generation & Fusion:** A diverse pool of lexical, dense, two-tower, collaborative filtering, and sequential *(BERT4Rec-based)* models. The top 200 candidates from each generator are merged using weighted Reciprocal Rank Fusion.
+* **XGBoost Reranker:** A learning-to-rank model that scores the fused candidates using 38 engineered features, including query-track embedding similarities, calibrated generator scores, track metadata, and session context.
+* **Heuristic Re-scoring & Assembly:** A rule-based final stage that rescores the reranker's output by exploiting strong sequential turn patterns (e.g., transitions between the same artist or album) to construct the final top-20 track list.
+* **Response Generation Pipeline:** An 8-bit quantized GEMMA-4-26B model. It operates through a four-stage prompt chain *(Context Summarisation, Initial Generation, Semantic Density, and Context-Aware Diversification)* specifically designed to maximize lexical diversity without influencing the LLM-Judge score.
+
+This decoupled approach effectively handles the severe item cold-start problem while maintaining high-quality text generation, **earning the 1st place on the final Blind-B leaderboard**.
 
 ## Reproducibility
 ### Step 1: Download the full challenge datasets to obtail the following structure
