@@ -1,0 +1,36 @@
+gemma-26B:
+  model_path: ../../models/gemma-4-26B-A4B-it-Q8_0.gguf
+  n_ctx: 4096
+  n_gpu_layers: -1
+  verbose: False
+  seed: -1
+
+qwen-27B:
+  model_path: ../../models/BF16/Qwen3.6-27B-BF16-00001-of-00002.gguf
+  n_ctx: 4096
+  n_gpu_layers: -1
+  verbose: False
+
+qwen-27B_8bit:
+  model_path: ../../models/Qwen3.6-27B-UD-Q8_K_XL.gguf
+  n_ctx: 4096
+  n_gpu_layers: -1
+  verbose: False
+
+gemma-31B_8bit:
+  model_path: ../../models/gemma-4-31B-it-UD-Q8_K_XL.gguf
+  n_ctx: 4096
+  n_gpu_layers: -1
+  verbose: False
+
+qwen-35B_8bit:
+  model_path: ../../models/Qwen3.6-35B-A3B-UD-Q8_K_XL.gguf
+  n_ctx: 4096
+  n_gpu_layers: -1
+  verbose: False
+
+deepseek-70B_5bit:
+  model_path: ../../models/DeepSeek-R1-Distill-Llama-70B-UD-Q5_K_XL.gguf
+  n_ctx: 4096
+  n_gpu_layers: -1
+  verbose: False

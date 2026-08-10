@@ -1,0 +1,10 @@
+**Explicit Preferences**
+* Popular Christmas jazz
+* Jazz piano sound
+* Beegie Adair
+
+**Negative Preferences**
+* None mentioned
+
+**Hard Constraints**
+* None mentioned

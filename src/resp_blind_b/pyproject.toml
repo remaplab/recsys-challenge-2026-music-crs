@@ -1,0 +1,30 @@
+[project]
+name = "BlindBGenLLM"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12, <3.13"
+dependencies = [
+    "polars",
+    "tqdm",
+    "pyyaml",
+    "torch",
+    "sentence-transformers>=5.5.1",
+    "Markdown"
+]
+
+# LLAMA CPP
+# export CMAKE_ARGS="-DGGML_CUDA=on -DCMAKE_CUDA_ARCHITECTURES=80"
+# export FORCE_CMAKE=1
+# uv pip install ninja scikit-build-core cmake
+# uv add llama-cpp-python --no-cache -v 
+
+# Define the PyTorch CUDA 12.1 index
+[[tool.uv.index]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+# Route the torch packages to the CUDA index
+[tool.uv.sources]
+torch = { index = "pytorch" }

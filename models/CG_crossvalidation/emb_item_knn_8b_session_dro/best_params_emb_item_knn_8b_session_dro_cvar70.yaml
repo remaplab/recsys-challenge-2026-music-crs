@@ -1,0 +1,49 @@
+class: EmbeddingItemKNN
+module: embedding_based.embedding_item_knn
+inference_mode: standard
+urm_mode: session
+robust:
+  mode: cvar
+  alpha: 0.7
+  metric: recall@200
+  strategy: calibrated
+study: emb_item_knn_8b_session_dro_cvar70
+best_trial: 561
+cv_score: 0.6053867592329747
+posi_score: 0.6082074350924424
+posi_per_fold:
+- 0.6538485742186777
+- 0.6588755705950101
+- 0.5683559106421124
+- 0.5537436588177364
+- 0.606213461188675
+eb_survivors:
+- 476
+- 561
+- 604
+- 671
+- 693
+- 715
+- 750
+- 776
+- 955
+- 956
+best_params:
+  k: 120
+  cf_weight: 2.0827894203729995
+  cf_k: 198
+  shrink: 0.1940978156446722
+  icm_weight: 0.5472103701355937
+  k_icm: 272
+  img_weight: 0.5723389090870841
+  img_k: 29
+fixed_params:
+  emb_sim_path: models/embedding_sim/W_emb_qwen3_8b_k500.npz
+  track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+  cache_k: 500
+  model_size: qwen3_8b
+  img_sim_path: models/embedding_sim/W_img_siglip2_k500.npz
+  img_parquet_glob: data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-*.parquet
+  img_cache_k: 500
+  icm_sim_path: models/embedding_sim/W_cbf_8b.npz
+  icm_cache_k: 500

@@ -1,0 +1,137 @@
+# Train all candidate generators — config for launchers/train_all_cgs.py
+#
+# Usage:
+#   cd src/basic_candidate_generators
+#   uv run python -m launchers.train_all_cgs
+#   uv run python -m launchers.train_all_cgs --split val
+#
+# Per-model controls:
+#   enabled: false    → skip this model entirely
+#   hyperparams:      → passed as **kwargs to the model constructor
+#   output_path:      → where to write the candidates parquet (required)
+#   model_save_path:  → optional; set to save the fitted model .pkl
+
+# ── Data ────────────────────────────────────────────────────────────────────
+splits:
+  train: "data/splitF/train.parquet"
+  val:   "data/splitF/val.parquet"
+  test:  "data/splitF/test.parquet"
+
+# Which split to run inference on (can be overridden with --split)
+split: "val"
+
+track_metadata_path: "data/talkpl-ai/TalkPlayData-Challenge-Track-Metadata/data/all_tracks-00000-of-00001.parquet"
+
+# ── Inference settings ───────────────────────────────────────────────────────
+top_k:            20
+remove_seen:      true
+max_future_years: 2.0    # tracks released up to N years after session_date are candidates
+urm_mode:         "user"  # "user" = one URM row per user (sessions merged); "session" = one row per session
+
+# ── Models ──────────────────────────────────────────────────────────────────
+models:
+
+  ItemKNN:
+    enabled: true
+    output_path:     "exp/candidates/val/item_knn.parquet"
+    model_save_path: null
+    hyperparams:
+      k:          150
+      shrink:     10.0
+      icm_weight: 0.1   # 0 = CF only; >0 blends with ICM cosine similarity
+      k_icm:      150
+
+  UserKNN:
+    enabled: false
+    output_path:     "exp/candidates/val/user_knn.parquet"
+    model_save_path: null
+    hyperparams:
+      k:          100
+      icm_weight: 0.1
+
+  TopPopular:
+    enabled: true
+    output_path:     "exp/candidates/val/top_pop.parquet"
+    model_save_path: null
+    hyperparams:
+      window:    "all"   # "1w" "2w" "1m" "2m" "3m" "6m" "1y" "2y" "3y" "5y" "all"
+      log_scale: true
+
+  EASE:
+    enabled: false
+    output_path:     "exp/candidates/val/ease.parquet"
+    model_save_path: null
+    hyperparams:
+      lambda_reg: 500.0
+      icm_weight: 0.1
+      k_icm:      150
+
+  RP3Beta:
+    enabled: true
+    output_path:     "exp/candidates/val/rp3beta.parquet"
+    model_save_path: null
+    hyperparams:
+      alpha:      0.5
+      beta:       0.3
+      top_k:      100
+      icm_weight: 0.1
+      k_icm:      150
+
+  SLIM_BPR:
+    enabled: true   # slow; enable when needed
+    output_path:     "exp/candidates/val/slim_bpr.parquet"
+    model_save_path: null
+    hyperparams:
+      top_k:         100
+      epochs:        50
+      learning_rate: 0.05
+      reg_pos:       0.001
+      reg_neg:       0.001
+      workers:       15
+      icm_weight:    0.1
+      k_icm:         150
+
+  SLIM_ElasticNet:
+    enabled: true   # slow; enable when needed
+    output_path:     "exp/candidates/val/slim_elasticnet.parquet"
+    model_save_path: null
+    hyperparams:
+      top_k:     100
+      alpha:     1.0e-4
+      l1_ratio:  0.5
+      max_iter:  100
+      tol:       1.0e-4
+      workers:   15
+      icm_weight: 0.1
+      k_icm:     150
+
+  MultVAE:
+    enabled: false   # requires GPU for reasonable speed
+    output_path:     "exp/candidates/val/multvae.parquet"
+    model_save_path: null
+    hyperparams:
+      hidden_dim:          600
+      latent_dim:          200
+      dropout:             0.5
+      beta:                0.2
+      learning_rate:       1.0e-3
+      batch_size:          512
+      epochs:              100
+      anneal_cap:          0.2
+      total_anneal_steps:  200000
+      weight_decay:        1.0e-5
+      use_icm:             true
+      icm_weight:          0.3
+      device: cuda
+
+  GFCF:
+    enabled: true
+    output_path:     "exp/candidates/val/gfcf.parquet"
+    model_save_path: null
+    hyperparams:
+      K:           32
+      alpha:       1.0
+      degree_exp:  0.5
+      beta:        0.5
+      filter_type: "combined"  # "standard" "linear" "power" "svd_only" "combined"
+      device:      cuda        # null = auto-detect (cuda if available, else cpu)

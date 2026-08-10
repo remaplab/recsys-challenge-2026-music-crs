@@ -1,0 +1,30 @@
+[project]
+name = "lower-bound-optimization"
+version = "0.1.0"
+description = "LBO: experimental pipeline targeting CV-vs-LB distribution shift (s01 distribution shift classifier + density ratio)."
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "polars>=1.40.1",
+    "pyarrow>=24.0.0",
+    "pandas>=2.3.3",
+    "numpy>=2.2.6",
+    "scipy>=1.15.3",
+    "scikit-learn>=1.7.2",
+    "pyyaml>=6.0.3",
+    "tqdm>=4.67.3",
+    "matplotlib>=3.10.9",
+    "seaborn>=0.13.2",
+    "ipykernel>=7.2.0",
+    "lightgbm>=4.5.0",
+    "xgboost>=3.2.0",
+    "shap>=0.46.0",
+    "umap-learn>=0.5.6",
+    "optuna>=4.0.0",
+    "statsmodels>=0.14.6",
+    "jupyter>=1.1.1",
+    "ipywidgets>=8.1.8",
+]
+
+[tool.uv]
+package = false

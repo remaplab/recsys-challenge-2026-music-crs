@@ -1,0 +1,7 @@
+**Explicit Preferences**
+* Hüsker Dü (artist)
+* Post-punk sound
+* Intense, melodic punk sound
+
+**Hard Constraints**
+* Must find a specific Hüsker Dü song containing the exact lyric: "I'm never talking to you again"

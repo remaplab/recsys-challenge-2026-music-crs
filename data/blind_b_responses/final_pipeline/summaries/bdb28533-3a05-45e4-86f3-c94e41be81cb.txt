@@ -1,0 +1,6 @@
+**Explicit Preferences**
+* The Jezabels (Artist)
+* Alternative rock genre
+
+**Hard Constraints**
+* Songs must be in the exact E major key signature (matching 'A Little Piece' by The Jezabels)

@@ -1,0 +1,15 @@
+Please refine the following text by eliminating the listed Target Bigrams. 
+
+<substitution_rules>
+{% for target in target_mappings %}
+Target Bigram to remove: "{{ target.bigram }}"
+DO NOT use these words as the replacement: {{ target.avoidance_list | join(', ') }}
+---
+{% endfor %}
+</substitution_rules>
+
+<text_to_edit>
+{{ response }}
+</text_to_edit>
+
+Remember: This is a surgical edit. Only make changes where the target bigrams appear. Ensure your replacements flow naturally, preserve the original meaning, and strictly obey the specific avoidance lists for each target.

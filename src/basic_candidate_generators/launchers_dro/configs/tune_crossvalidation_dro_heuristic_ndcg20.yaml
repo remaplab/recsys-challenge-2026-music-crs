@@ -1,0 +1,90 @@
+# DRO CV tuning — heuristic CG only, metric = ndcg@20.
+#
+# Side-by-side with the default `tune_crossvalidation_dro.yaml` (recall@200).
+# Outputs go to a separate `storage_dir` root so the two studies coexist.
+#
+# Run:
+#   cd src/basic_candidate_generators
+#   uv run python -m launchers_dro.tune_crossvalidation_dro \
+#       --model heuristic \
+#       --config launchers_dro/configs/tune_crossvalidation_dro_heuristic_ndcg20.yaml \
+#       --storage_dir models/CG_crossvalidation_ndcg20
+#
+#   uv run python -m launchers_dro.extract_best_params_dro \
+#       --model heuristic --urm_mode session \
+#       --config launchers_dro/configs/tune_crossvalidation_dro_heuristic_ndcg20.yaml \
+#       --storage_dir models/CG_crossvalidation_ndcg20
+#
+#   uv run python -m launchers_dro.retrain_and_export_dro \
+#       --model heuristic --urm_mode session \
+#       --storage_dir models/CG_crossvalidation_ndcg20
+#
+# The new `cv_best_heuristic_session_dro_cvar70.yaml` will be written into
+# both `configs/` and `models/CG_crossvalidation_ndcg20/heuristic_session_dro/`
+# (legacy + storage). To avoid clobbering the recall@200 YAML in the package
+# `configs/` dir, the retrain step uses the storage_yaml copy first (which
+# lives under the unique storage_dir root) so the legacy file is irrelevant.
+# ---------------------------------------------------------------------------
+
+data:
+  splitk_dir: data/splitK
+  track_metadata_path: data/talkpl-ai/TalkPlayData-Challenge-Track-Metadata/data/all_tracks-00000-of-00001.parquet
+  blind_parquet: data/talkpl-ai/TalkPlayData-Challenge-Blind-A/data/test-00000-of-00001.parquet
+  density_ratio: models/LowerBoundOptimization/distribution_shift_v2/density_ratio.parquet
+  n_folds: 5
+
+evaluation:
+  metric: ndcg@20                # only diff vs default config
+  strategy: calibrated
+  n_subsets: 2000
+  subset_size: 80
+  strat_cols: [specificity, category, pop_mean, year_mean]
+  strategies: [calibrated, density, stratified]
+  seed: 42
+  top_k_inference: 700
+  cache_dir: models/CG_crossvalidation_ndcg20/eval_cache_dro
+  posi_cache_dir: models/CG_crossvalidation_ndcg20/eval_cache_dro_posi
+  posi_n_subsets: 2000
+
+robust:
+  mode: cvar
+  alpha: 0.7
+
+pruning:
+  n_startup_trials: 5
+  n_warmup_steps: 1
+
+# Single model — identical search space to the default yaml so the two
+# studies are paired-comparable.
+models:
+  heuristic:
+    class: HeuristicRecommender
+    module: heuristic.heuristic_v0
+    n_trials: 1000
+    n_jobs: 5
+    urm_modes: [session]
+    fixed_params: {}
+    search_space:
+      album_last:   {low: 0.0,  high: 10.0,            type: float}
+      artist_last:  {low: 0.0,  high: 10.0,            type: float}
+      album_any:    {low: 0.0,  high: 10.0,            type: float}
+      artist_any:   {low: 0.0,  high: 10.0,            type: float}
+      year:         {low: 0.0,  high: 10.0,            type: float}
+      pop_match:    {low: 0.0,  high: 10.0,            type: float}
+      pop_z:        {low: 0.0,  high: 10.0,            type: float}
+      cat_A:        {low: 0.2,  high: 10.0,            type: float}
+      cat_B:        {low: 0.2,  high: 10.0,            type: float}
+      cat_C:        {low: 0.2,  high: 10.0,            type: float}
+      cat_D:        {low: 0.2,  high: 10.0,            type: float}
+      cat_E:        {low: 0.2,  high: 10.0,            type: float}
+      cat_F:        {low: 0.2,  high: 10.0,            type: float}
+      cat_G:        {low: 0.2,  high: 10.0,            type: float}
+      cat_H:        {low: 0.2,  high: 10.0,            type: float}
+      cat_I:        {low: 0.2,  high: 10.0,            type: float}
+      cat_J:        {low: 0.2,  high: 10.0,            type: float}
+      cat_K:        {low: 0.2,  high: 10.0,            type: float}
+      spec_HH:      {low: 0.2,  high: 10.0,            type: float}
+      spec_LH:      {low: 0.2,  high: 10.0,            type: float}
+      spec_HL:      {low: 0.2,  high: 10.0,            type: float}
+      spec_LL:      {low: 0.2,  high: 10.0,            type: float}
+      decade_top_n: {low: 50,   high: 1000, log: true, type: int}

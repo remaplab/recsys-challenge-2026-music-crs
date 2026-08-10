@@ -1,0 +1,380 @@
+emb_item_knn_contrastive:
+  splitA:
+    session:
+      best_value: 0.17837306
+      n_trials: 100
+      params:
+        k_cf: 92
+        k_emb: 296
+        k_icm: 114
+        shrink_cf: 2.187463793977652
+        shrink_icm: 13.968529248063225
+        w_cf: 0.0009879554077801165
+        w_emb: 0.44859170929639647
+        w_icm: 0.6015447561577054
+    user:
+      best_value: 0.11795687
+      n_trials: 139
+      params:
+        k_cf: 53
+        k_emb: 59
+        k_icm: 59
+        shrink_cf: 3.1532934669683956
+        shrink_icm: 10.204116992232514
+        w_cf: 0.0021746292022363275
+        w_emb: 0.9033752353137947
+        w_icm: 0.9332083863052287
+emb_item_knn_diffae:
+  splitA:
+    session:
+      best_value: 0.16526216
+      n_trials: 100
+      params:
+        k_cf: 386
+        k_emb: 427
+        k_icm: 61
+        shrink_cf: 2.930372565607377
+        shrink_icm: 7.495643211303657
+        w_cf: 0.022373828632696234
+        w_emb: 0.8684921889113906
+        w_icm: 0.9117035030499945
+    user:
+      best_value: 0.10789952
+      n_trials: 100
+      params:
+        k_cf: 75
+        k_emb: 296
+        k_icm: 139
+        shrink_cf: 12.126512879661936
+        shrink_icm: 13.0255237823934
+        w_cf: 0.008249751423746073
+        w_emb: 0.6435686588245991
+        w_icm: 0.6913152134478197
+emb_item_knn_multivae:
+  splitA:
+    session:
+      best_value: 0.17957517
+      n_trials: 100
+      params:
+        k_cf: 78
+        k_emb: 264
+        k_icm: 308
+        shrink_cf: 26.676122610999457
+        shrink_icm: 28.044074099165773
+        w_cf: 0.00023866897442406405
+        w_emb: 0.6230046512695167
+        w_icm: 0.7486724977035817
+    user:
+      best_value: 0.11713116
+      n_trials: 100
+      params:
+        k_cf: 68
+        k_emb: 290
+        k_icm: 295
+        shrink_cf: 1.0061238338610192
+        shrink_icm: 28.044074099165773
+        w_cf: 0.00024100220603828684
+        w_emb: 0.5900160944627972
+        w_icm: 0.8889559360851655
+gf_cf:
+  splitA:
+    session:
+      best_value: 0.09635467
+      n_trials: 200
+      params:
+        K: 2048
+        alpha: 4.97648610067607
+        beta: 1.5217621642095367
+        degree_exp: 0.8633667796677025
+        filter_type: power
+    user:
+      best_value: 0.05448929
+      n_trials: 200
+      params:
+        K: 2048
+        alpha: 4.923026910526558
+        beta: 1.2409549622717093
+        degree_exp: 0.5458493578712107
+        filter_type: linear
+  splitF:
+    session:
+      best_value: 0.09833138
+      n_trials: 200
+      params:
+        K: 896
+        alpha: 1.2493438748156058
+        beta: 1.3668490427081181
+        degree_exp: 0.09147851703352601
+        filter_type: power
+    user:
+      best_value: 0.06139237
+      n_trials: 200
+      params:
+        K: 512
+        alpha: 1.0978783390213973
+        beta: 0.6465614483777008
+        degree_exp: 0.48306108827129474
+        filter_type: linear
+  splitG:
+    session:
+      best_value: 0.09030295
+      n_trials: 200
+      params:
+        K: 832
+        alpha: 2.118645738394748
+        beta: 1.0723011627483312
+        degree_exp: 0.6776822158509941
+        filter_type: power
+    user:
+      best_value: 0.07392331
+      n_trials: 200
+      params:
+        K: 1664
+        alpha: 1.7238968882426284
+        beta: 1.3377484324380742
+        degree_exp: 0.21809035172247887
+        filter_type: power
+  splitH:
+    session:
+      best_value: 0.0964271
+      n_trials: 200
+      params:
+        K: 2048
+        alpha: 4.974462929534361
+        beta: 0.9500186459507022
+        degree_exp: 0.5326593869538634
+        filter_type: power
+    user:
+      best_value: 0.05410657
+      n_trials: 200
+      params:
+        K: 2048
+        alpha: 4.920049788917133
+        beta: 1.3901453279719922
+        degree_exp: 0.4708681103717013
+        filter_type: power
+  splitI:
+    session:
+      best_value: 0.09046761
+      n_trials: 200
+      params:
+        K: 1152
+        alpha: 1.9682448275509064
+        beta: 1.7538682471360119
+        degree_exp: 0.01661425147995623
+        filter_type: power
+    user:
+      best_value: 0.07413184
+      n_trials: 200
+      params:
+        K: 1600
+        alpha: 2.1018402173051483
+        beta: 1.3309845759469108
+        degree_exp: 0.33700351931346395
+        filter_type: linear
+item_knn:
+  splitA:
+    session:
+      best_value: 0.16905717
+      n_trials: 306
+      params:
+        icm_weight: 0.2260403835104602
+        k: 62
+        k_icm: 16
+        shrink: 360.0722913564395
+    user:
+      best_value: 0.11937738
+      n_trials: 306
+      params:
+        icm_weight: 0.7348416961134272
+        k: 313
+        k_icm: 12
+        shrink: 945.3557249343464
+  splitF:
+    session:
+      best_value: 0.18541997
+      n_trials: 306
+      params:
+        icm_weight: 0.10406789366254385
+        k: 20
+        k_icm: 12
+        shrink: 41.87918133429428
+    user:
+      best_value: 0.13088928
+      n_trials: 306
+      params:
+        icm_weight: 0.44164205045979144
+        k: 234
+        k_icm: 12
+        shrink: 8.35098022868848
+  splitG:
+    session:
+      best_value: 0.15704422
+      n_trials: 300
+      params:
+        icm_weight: 0.01622392009601939
+        k: 58
+        k_icm: 48
+        shrink: 259.38667131078853
+    user:
+      best_value: 0.13722013
+      n_trials: 300
+      params:
+        icm_weight: 0.03886246372075859
+        k: 42
+        k_icm: 49
+        shrink: 103.62803406009715
+  splitH:
+    session:
+      best_value: 0.16917411
+      n_trials: 300
+      params:
+        icm_weight: 0.4473790143482366
+        k: 231
+        k_icm: 16
+        shrink: 121.32468233736783
+    user:
+      best_value: 0.11933788
+      n_trials: 300
+      params:
+        icm_weight: 0.8370654399663654
+        k: 385
+        k_icm: 13
+        shrink: 636.8631970567578
+  splitI:
+    session:
+      best_value: 0.15569391
+      n_trials: 300
+      params:
+        icm_weight: 0.04946555980268672
+        k: 73
+        k_icm: 254
+        shrink: 98.73978562976109
+    user:
+      best_value: 0.1369121
+      n_trials: 300
+      params:
+        icm_weight: 0.05792928883646366
+        k: 186
+        k_icm: 46
+        shrink: 84.06819426704483
+rp3beta:
+  splitA:
+    session:
+      best_value: 0.16829922
+      n_trials: 200
+      params:
+        alpha: 1.664632007459513
+        beta: 0.49258098081341445
+        icm_weight: 0.9997052353940946
+        k_icm: 16
+        top_k: 150
+    user:
+      best_value: 0.1192457
+      n_trials: 200
+      params:
+        alpha: 1.9967617092433263
+        beta: 0.6300405743243248
+        icm_weight: 0.9762291434378033
+        k_icm: 12
+        top_k: 30
+  splitF:
+    session:
+      best_value: 0.18495126
+      n_trials: 200
+      params:
+        alpha: 0.3487611885237948
+        beta: 0.317519413423993
+        icm_weight: 0.5966230411743152
+        k_icm: 12
+        top_k: 58
+    user:
+      best_value: 0.13144435
+      n_trials: 200
+      params:
+        alpha: 0.17460485863258748
+        beta: 0.6541226794736621
+        icm_weight: 0.8039899693053684
+        k_icm: 12
+        top_k: 398
+  splitG:
+    session:
+      best_value: 0.15505507
+      n_trials: 200
+      params:
+        alpha: 0.10981302064791987
+        beta: 0.0007768284708223605
+        icm_weight: 0.5733636018058774
+        k_icm: 50
+        top_k: 62
+    user:
+      best_value: 0.13371029
+      n_trials: 200
+      params:
+        alpha: 0.16928919568748993
+        beta: 0.26992444164492635
+        icm_weight: 0.716452127169903
+        k_icm: 46
+        top_k: 178
+  splitH:
+    session:
+      best_value: 0.16836118
+      n_trials: 200
+      params:
+        alpha: 1.9156115855735472
+        beta: 0.7154145801698348
+        icm_weight: 0.9179698122876507
+        k_icm: 16
+        top_k: 78
+    user:
+      best_value: 0.11923485
+      n_trials: 200
+      params:
+        alpha: 0.8827956934795416
+        beta: 0.30719444665821144
+        icm_weight: 0.9995923940912166
+        k_icm: 13
+        top_k: 262
+  splitI:
+    session:
+      best_value: 0.15340986
+      n_trials: 200
+      params:
+        alpha: 0.10350193210900976
+        beta: 0.11748629415027514
+        icm_weight: 0.5985985158263316
+        k_icm: 49
+        top_k: 198
+    user:
+      best_value: 0.13344838
+      n_trials: 200
+      params:
+        alpha: 0.4671780658996687
+        beta: 0.02442537162631954
+        icm_weight: 0.39266774231099333
+        k_icm: 46
+        top_k: 288
+slim_bpr:
+  splitA:
+    session:
+      best_value: 0.148024
+      n_trials: 2
+      params:
+        epochs: 190
+        icm_weight: 0.8324426408004217
+        k_icm: 22
+        learning_rate: 0.08148293210105287
+        reg_neg: 0.07579479953348005
+        reg_pos: 1.2087541473056957e-05
+        top_k: 440
+    user:
+      best_value: 0.09675815
+      n_trials: 2
+      params:
+        epochs: 190
+        icm_weight: 0.8324426408004217
+        k_icm: 22
+        learning_rate: 0.08148293210105287
+        reg_neg: 0.07579479953348005
+        reg_pos: 1.2087541473056957e-05
+        top_k: 440

@@ -1,0 +1,338 @@
+# One-shot (turn-1-only) CG HP tuning config.
+#
+# Same machinery as launchers_dro.tune_crossvalidation_dro, with two changes:
+#   - data.turn_filter: 1   → train_df / eval_df / evaluator GT restricted to
+#     turn_number == 1 (one-shot recommendation; no prior session context).
+#   - evaluation.metric: recall@200 → CGs maximise candidate coverage for the
+#     downstream reranker (final leaderboard metric is NDCG@20, handled there).
+#
+# Output: models/CG_crossvalidation/<model>_oneshot/ (cache/, datasets/,
+# checkpoints/, submission/, optuna_<model>_oneshot.db, best_params_*).
+#
+# Run:
+#   cd src/basic_candidate_generators
+#   uv run python -m launchers_dro_oneshot.tune_crossvalidation_oneshot --model dense_text_8b
+# ---------------------------------------------------------------------------
+
+data:
+  splitk_dir: data/splitK
+  track_metadata_path: data/talkpl-ai/TalkPlayData-Challenge-Track-Metadata/data/all_tracks-00000-of-00001.parquet
+  blind_parquet: data/talkpl-ai/TalkPlayData-Challenge-Blind-A/data/test-00000-of-00001.parquet
+  density_ratio: models/LowerBoundOptimization/distribution_shift_v2/density_ratio.parquet
+  n_folds: 5
+  turn_filter: 1
+
+evaluation:
+  metric: recall@200
+  strategy: calibrated
+  n_subsets: 2000
+  subset_size: 80
+  strat_cols: [specificity, category, pop_mean, year_mean]
+  strategies: [calibrated, density, stratified]
+  seed: 42
+  top_k_inference: 700
+  # turn-1 subsets differ from the all-turn DRO subsets → separate cache.
+  cache_dir: models/CG_crossvalidation/eval_cache_oneshot
+
+robust:
+  mode: cvar
+  alpha: 0.7
+
+# Stage-2 RRF fusion (tune_rrf_oneshot.py). Components must have been tuned AND
+# exported (export_oneshot_candidates.py) first. Each gets one tuned weight;
+# k_rrf is shared. A useless component's weight prunes toward 0.
+rrf:
+  n_trials: 1000
+  components: [dense_text_8b, dense_text_4b, dense_text_0p6b,
+               tfidf, bm25, bm25f, char_ngram, entity_match, bm25_colisten,
+               tower_a, tower_b, tower_c, tower_audioclap]
+  # RRF score is invariant to a global weight scale (only ratios matter), so one
+  # component is pinned to weight 1.0 (the anchor) and the rest tuned relative to
+  # it — removes the scale degeneracy. Default anchor = first component.
+  anchor_component: dense_text_8b
+  # weight: log scale, symmetric-ish around the anchor (1.0): 1e-3 ≈ off (1000:1
+  # vs anchor → ~0.1% contribution), 100 = dominate. log-uniform gives equal TPE
+  # budget per decade so weak and strong weights are both resolved.
+  weight: {low: 1.0e-3, high: 100.0, log: true, type: float}
+  # k_rrf: sensitivity is concentrated at small k (2→10 huge, 100→150 tiny) →
+  # log spends samples where they matter.
+  k_rrf:  {low: 2, high: 150, log: true, type: int}
+  fuse_top_k: 200          # candidates kept in the fused output
+
+pruning:
+  n_startup_trials: 5
+  n_warmup_steps: 1
+
+# ---------------------------------------------------------------------------
+# Components. Each tuned independently (stage 1); RRF fusion is tuned later
+# (stage 2) over the retained candidate lists.
+# ---------------------------------------------------------------------------
+
+models:
+
+  # --- dense_text: untrained query->track cosine retrieval ------------------
+  # 8b/4b/0.6b reuse DenseQueryCG (query + track share the Qwen3 space at that
+  # size; per-size query caches live under each model dir).
+  dense_text_8b:
+    class: DenseQueryCG
+    module: embedding_based.dense_query_cg
+    n_trials: 10
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      model_size: qwen3_8b
+    search_space:
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+
+  dense_text_4b:
+    class: DenseQueryCG
+    module: embedding_based.dense_query_cg
+    n_trials: 10
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-4B/dense_tracks_len256_poollast
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-4B
+      model_size: qwen3_4b
+    search_space:
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+
+  dense_text_0p6b:
+    class: DenseQueryCG
+    module: embedding_based.dense_query_cg
+    n_trials: 10
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-0.6B/dense_tracks_len256_poollast
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-0.6B
+      model_size: qwen3_0p6b
+    search_space:
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+
+  # --- lexical retrieval (clean turn-1 reimplementations) -------------------
+  tfidf:
+    class: TfidfOneShot
+    module: embedding_oneshot.tfidf_oneshot
+    n_trials: 80
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      query_text_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+    search_space:
+      max_features: {low: 10000, high: 100000, step: 10000, type: int}
+      ngram_max:    {choices: [1, 2, 3]}
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+      # E3.4: drop high-DF query boilerplate (stopword_df_q only used when on).
+      template_stopwords: {choices: [true, false]}
+      stopword_df_q: {choices: [0.3, 0.5, 0.7], conditional_on: {template_stopwords: true}}
+
+  bm25:
+    class: Bm25OneShot
+    module: embedding_oneshot.bm25_oneshot
+    n_trials: 80
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      query_text_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+    search_space:
+      k1:           {low: 0.5, high: 3.0, type: float}
+      b:            {low: 0.3, high: 1.0, type: float}
+      max_features: {low: 10000, high: 100000, step: 10000, type: int}
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+      template_stopwords: {choices: [true, false]}
+      stopword_df_q: {choices: [0.3, 0.5, 0.7], conditional_on: {template_stopwords: true}}
+
+  # --- E3.1 field-weighted BM25 (separate index per metadata field) ---------
+  bm25f:
+    class: Bm25FOneShot
+    module: embedding_oneshot.bm25f_oneshot
+    n_trials: 80
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      query_text_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+    search_space:
+      k1:           {low: 0.5, high: 3.0, type: float}
+      b:            {low: 0.3, high: 1.0, type: float}
+      max_features: {low: 10000, high: 100000, step: 10000, type: int}
+      w_artist:     {low: 0.0, high: 5.0, type: float}
+      w_track:      {low: 0.0, high: 5.0, type: float}
+      w_tags:       {low: 0.0, high: 5.0, type: float}
+      w_album:      {low: 0.0, high: 5.0, type: float}
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+      template_stopwords: {choices: [true, false]}
+      stopword_df_q: {choices: [0.3, 0.5, 0.7], conditional_on: {template_stopwords: true}}
+
+  # --- E3.2 char-ngram channel (typo/accent robustness) ---------------------
+  # Reuses TfidfOneShot with analyzer=char_wb; fuses via RRF with the word signals.
+  char_ngram:
+    class: TfidfOneShot
+    module: embedding_oneshot.tfidf_oneshot
+    n_trials: 80
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      query_text_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      analyzer: char_wb
+    search_space:
+      ngram_min:    {choices: [2, 3]}
+      ngram_max:    {choices: [4, 5]}
+      max_features: {low: 20000, high: 200000, step: 20000, type: int}
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+
+  # --- E3.3 exact entity injection (artist/track/album alias match) ---------
+  entity_match:
+    class: EntityMatchOneShot
+    module: embedding_oneshot.entity_match_oneshot
+    n_trials: 80
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      query_text_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+    search_space:
+      w_artist:     {low: 0.0, high: 5.0, type: float}
+      w_track:      {low: 0.0, high: 5.0, type: float}
+      w_album:      {low: 0.0, high: 5.0, type: float}
+      min_alias_len: {choices: [3, 4, 5]}
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+
+  # --- E3.6 co-listen doc enrichment (BM25 over docs + co-artists) ----------
+  # uses_colisten → launcher passes the unfiltered (multi-turn) fold to fit.
+  bm25_colisten:
+    class: Bm25OneShot
+    module: embedding_oneshot.bm25_oneshot
+    n_trials: 80
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    uses_colisten: true
+    fixed_params:
+      query_text_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+    search_space:
+      k1:           {low: 0.5, high: 3.0, type: float}
+      b:            {low: 0.3, high: 1.0, type: float}
+      max_features: {low: 10000, high: 100000, step: 10000, type: int}
+      colisten_top_n: {choices: [5, 10, 20, 40]}
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+      template_stopwords: {choices: [true, false]}
+      stopword_df_q: {choices: [0.3, 0.5, 0.7], conditional_on: {template_stopwords: true}}
+
+  # --- popularity priors ----------------------------------------------------
+  profile_pop:
+    class: PopPriorCG
+    module: embedding_oneshot.pop_prior_cg
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      profile_keys: [country_code, preferred_language, preferred_musical_culture, age_group]
+      top_n: 1000
+    search_space:
+      min_bucket_count: {low: 5, high: 200, log: true, type: int}
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+
+  global_pop:
+    class: PopPriorCG
+    module: embedding_oneshot.pop_prior_cg
+    n_trials: 10
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      profile_keys: []
+      top_n: 1000
+    search_space:
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+
+  # --- learned single towers (query8B × modality, InfoNCE + SWAG) -----------
+  # Shared training search space; modality differs. A useless tower's recall is
+  # simply low and its RRF weight prunes in stage 2.
+  tower_a:
+    class: TowerA
+    module: embedding_oneshot.tower_a
+    n_trials: 100
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+    search_space: &tower_search
+      # max_train_turn: train on turns 1..T. 1 = turn-1-only (~12k pairs); 8 =
+      # all turns (~8x more, ~30s/fit). Higher = more data but more distribution
+      # shift from turn-1. The tuner picks the threshold per tower.
+      max_train_turn:   {low: 1, high: 8, type: int}
+      d:                {choices: [32, 64, 128, 256]}
+      hidden:           {choices: [256, 512]}
+      epochs:           {low: 2,   high: 20,    type: int}
+      lr:               {low: 1.0e-4, high: 5.0e-3, log: true, type: float}
+      tau:              {low: 0.02, high: 0.1, type: float}
+      swag_k:           {choices: [0, 1, 3, 5, 10, 20]}
+      swag_max_rank:    {choices: [3, 5, 10, 15]}
+      swag_collect_every: {choices: [0, 1, 5, 20]}
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+
+  tower_b:
+    class: TowerB
+    module: embedding_oneshot.tower_b
+    n_trials: 120
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      track_parquet_glob: data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-*.parquet
+    search_space: *tower_search
+
+  tower_c:
+    class: TowerC
+    module: embedding_oneshot.tower_c
+    n_trials: 120
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      track_parquet_glob: data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-*.parquet
+    search_space: *tower_search
+
+  tower_audioclap:
+    class: TowerAudioClap
+    module: embedding_oneshot.tower_audioclap
+    n_trials: 120
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      track_parquet_glob: data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-*.parquet
+    search_space: *tower_search
+
+  # competition metadata-qwen0.6b track column × our 0.6B query cache. Untrained
+  # cross-encoding cosine (see DenseModalityCG docstring) — may be weak.
+  dense_text_comp:
+    class: DenseModalityCG
+    module: embedding_oneshot.dense_text_cg
+    n_trials: 30
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false
+    fixed_params:
+      track_parquet_glob: data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-*.parquet
+      track_column: metadata-qwen3_embedding_0.6b
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-0.6B
+      model_size: qwen3_0p6b
+    search_space:
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}

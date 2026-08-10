@@ -1,0 +1,71 @@
+model: query_full_multibehav_alltext_softor
+class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryFullMultiBehavRecommender
+module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query_full_multibehav
+urm_mode: session
+inference_mode: standard
+best_params:
+  hidden_size: 192
+  n_layers: 4
+  dropout: 0.27447441605346606
+  mask_prob: 0.1728098740922576
+  lr: 0.004389307541496883
+  weight_decay: 0.0012751950805392816
+  init_tau: 0.05807845460075815
+  lr_final_factor: 0.06047016376966239
+  artist_dim: 384
+  album_dim: 256
+  tag_dim: 192
+  hardneg_k: 38
+  hardneg_weight: 0.23560349355843113
+  hardneg_tau: 0.20325486179777028
+  n_interests: 2
+  interest_da: 256
+  mv_beta: 13.88051828899409
+  rr_weight: 3.565347592224876
+fixed_params:
+  feature_emb_paths:
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet
+  feature_modalities:
+  - metadata-qwen3_embedding_0.6b
+  - attributes-qwen3_embedding_0.6b
+  - lyrics-qwen3_embedding_0.6b
+  - cf-bpr
+  - audio-laion_clap
+  max_seq_len: 50
+  n_heads: 8
+  batch_size: 256
+  epochs: 200
+  warmup_ratio: 0.1
+  val_ratio: 0.1
+  early_stop_patience: 25
+  max_future_years: 0.0
+  icm_compressed_dim: 256
+  device: auto
+  query_emb_dir: models/query_emb_cache/qwen3_frozen
+  query_cache_splits:
+  - train
+  - dev
+  - blind_a
+  select_mode: softor
+  early_stop_metric: recall
+  eval_min_turn: 2
+  eval_recall_k: 200
+cv_results:
+  primary_metric: recall@200
+  primary_value: 0.740269
+  ndcg:
+    20: 0.254673
+  recall:
+    20: 0.524151
+    200: 0.740269
+lb_selection:
+  lb_stat: cvar
+  fold_lb_value: 0.750846
+  fold_trial_number: 41
+  rank: 3
+  cv_lb_mean: 0.749643

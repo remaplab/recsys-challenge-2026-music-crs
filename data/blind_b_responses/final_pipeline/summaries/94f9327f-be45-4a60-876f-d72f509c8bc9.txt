@@ -1,0 +1,12 @@
+**Explicit Preferences**
+* God Is An Astronaut (Artist)
+* Experimental and atmospheric sound
+* Tracks from the album 'Origins'
+* Darker, abstract album cover art
+
+**Negative Preferences (Dislikes)**
+* Grand, space-rock style (user is seeking to move away from this specific phase)
+* Albums with fiery, bright cover art
+
+**Hard Constraints**
+* Recommendations must be specifically from the 'Origins' album

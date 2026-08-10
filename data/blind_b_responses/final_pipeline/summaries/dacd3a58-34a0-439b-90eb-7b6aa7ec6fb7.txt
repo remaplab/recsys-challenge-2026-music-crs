@@ -1,0 +1,10 @@
+**Explicit Preferences**
+* Sarah McLachlan
+* Music characterized by profound introspection, longing, heartfelt emotion, and an acoustic feel
+
+**Negative Preferences (Dislikes)**
+* Recommendations for different songs (e.g., "I Will Not Forget You", "Fumbling Towards Ecstasy", "Hallelujah") when a specific track is requested
+
+**Hard Constraints**
+* Must play the specific song "Fallen" by Sarah McLachlan
+* Must play the specific version of "Fallen" that emphasizes introspection and longing

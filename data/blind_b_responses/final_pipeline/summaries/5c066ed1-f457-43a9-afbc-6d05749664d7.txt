@@ -1,0 +1,9 @@
+* Explicit Preferences:
+    * Kamelot (band)
+    * Symphonic metal
+    * Tracks from the album 'Silverthorn'
+    * Music that embodies specific themes of sorrow and loss
+* Negative Preferences:
+    * None identified
+* Hard Constraints:
+    * None identified

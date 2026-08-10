@@ -1,0 +1,14 @@
+**Explicit Preferences**
+* Classic rock
+* 1970s or 1980s rock era
+* Iconic, soaring, and powerful guitar solos
+* Anthemic and "massive" sounding tracks
+* Music that builds up intensity
+
+**Negative Preferences**
+* Trip hop
+* Chill/ambient music
+* Smooth/jazzy undertones (in the context of the current search)
+
+**Hard Constraints**
+* Must be from the 70s or 80s era

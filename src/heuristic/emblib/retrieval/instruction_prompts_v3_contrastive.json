@@ -1,0 +1,27 @@
+{
+  "base": "Given a music recommendation request, retrieve the most relevant track from the catalog.",
+  "per_bucket": {
+    "AL": "Retrieve tracks matching the described sound, instrumentation, and sonic texture. Weight sonic characteristics heavily; ignore lyrical themes and popularity unless mentioned.",
+    "AH": "Identify the one specific track the listener remembers by its sound. Weight sonic and stylistic detail heavily; ignore popularity and unrelated metadata.",
+    "BL": "Retrieve tracks matching the described lyrical themes, narrative, and subject matter. Weight lyrics and meaning; do not weight genre, era, or popularity unless the listener mentions them.",
+    "BH": "Identify the one specific track from an exact lyrical phrase or storyline. Match the lyrics precisely; ignore genre and popularity.",
+    "CL": "Retrieve tracks whose mood and aesthetic fit the described visual vibe, using genre and mood descriptors as the proxy. Ignore literal popularity and era unless stated.",
+    "CH": "Identify the one specific album described by its cover art, mapping the visual aesthetic to style and mood. Ignore popularity.",
+    "DL": "Retrieve tracks fitting the described activity, setting, or atmosphere. Weight mood-for-context; ignore artist identity and chart popularity.",
+    "DH": "If a title/artist is named, identify it exactly; otherwise match the precise situation. Treat any named entity as a hard constraint.",
+    "EL": "Extend the listener's current direction with gentle variety for open-ended discovery.",
+    "EH": "Sharpen toward the one element the listener is realizing they like; weight that specific musical/lyrical aspect.",
+    "FL": "Satisfy the stated metadata constraints (genre, era, label, album, vocal type). Treat named artists, labels, and years as HARD filters, not soft preferences.",
+    "FH": "Identify the one specific release from vague metadata cues. Treat each named or implied artist, label, era, and aesthetic as a narrowing constraint.",
+    "GL": "Retrieve tracks matching the mood and emotional need. Weight emotion and feel; ignore era and popularity unless mentioned.",
+    "GH": "Identify the one specific track tied to the described mood/memory using emotional and sonic cues.",
+    "HL": "Retrieve works by or closely aligned with the named artist. The artist's identity matters MORE than mood or era; foreground the artist.",
+    "HH": "Identify the one specific track by the named artist, prioritizing exact artist and title match above mood, era, and popularity.",
+    "IL": "Retrieve tracks matching the described culture, region, or language. Weight cultural/geographic authenticity; ignore unrelated popularity.",
+    "IH": "Identify the one specific track tied to the named culture or place using regional and linguistic cues.",
+    "JL": "Retrieve tracks popular within the described community or context, not just global charts. Respect any era named.",
+    "JH": "Identify the one specific track by its acclaim or chart-recognition cue (award, chart placement, song-of-the-week).",
+    "KL": "Retrieve tracks from the described era/decade, weighting period-characteristic sound; ignore current popularity.",
+    "KH": "Identify the one specific track from the described era using period sound and sonic cues."
+  }
+}

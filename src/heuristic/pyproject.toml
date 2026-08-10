@@ -1,0 +1,36 @@
+[project]
+name = "recsys-challenge-2026"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12, <3.13"
+dependencies = [
+    "accelerate>=1.13.0",
+    "datasets>=4.8.4",
+    "huggingface-hub>=0.34.0,<1.0.0",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.4",
+    "optuna>=4.8.0",
+    "optuna-dashboard>=0.20.0",
+    "pandas>=3.0.2",
+    "polars>=1.40.1",
+    "scipy>=1.17.1",
+    "sentence-transformers>=5.4.1",
+    "torch==2.5.1",
+    "transformers==4.53.3",
+    "peft>=0.13.0",
+    "pyarrow>=24.0.0",
+    "requests>=2.33.1",
+    "hf-xet>=1.4.3",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'linux'" }
+]

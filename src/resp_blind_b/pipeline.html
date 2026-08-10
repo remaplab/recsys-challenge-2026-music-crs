@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagramma di Flusso LLM</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #4f46e5;
+            --accent: #ec4899; 
+            --past-bg: #f8fafc;
+            --past-border: #cbd5e1;
+            --present-bg: #f0fdf4;
+            --present-border: #86efac;
+            --present-text: #166534;
+            --background: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-main);
+            margin-bottom: 40px;
+        }
+
+        /* LAYOUT A COLONNE PER IL FLUSSO INIZIALE */
+        .flow-split {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 0;
+            position: relative;
+        }
+
+        .flow-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .col-header {
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+            padding: 5px 15px;
+            border-radius: 20px;
+        }
+
+        .header-past { background: #e2e8f0; color: #334155; }
+        .header-present { background: #dcfce7; color: #166534; }
+
+        /* CHAT BUBBLES */
+        .chat-container {
+            width: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .chat-bubble {
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+            max-width: 85%;
+            position: relative;
+        }
+
+        .bubble-user {
+            background: #e0e7ff;
+            color: #3730a3;
+            margin-left: auto;
+            border-bottom-right-radius: 2px;
+        }
+
+        .bubble-assistant {
+            background: #f1f5f9;
+            color: #475569;
+            margin-right: auto;
+            border-bottom-left-radius: 2px;
+        }
+
+        .bubble-current {
+            background: #dcfce7;
+            color: #166534;
+            margin-left: auto;
+            border-bottom-right-radius: 2px;
+            border: 1px solid #86efac;
+        }
+
+        .turn-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-bottom: 2px;
+            display: block;
+        }
+
+        /* FRECCE E CONNETTORI */
+        .arrow-down {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 5px 0 15px 0;
+        }
+
+        .present-wait {
+            color: var(--present-text);
+            font-size: 0.8rem;
+            font-style: italic;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        /* BOX DEGLI STEP */
+        .step-box {
+            width: 100%;
+            background-color: var(--card-bg);
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: relative;
+            box-sizing: border-box;
+            margin: 15px auto;
+        }
+
+        .step-box.past-action { border-color: var(--primary); }
+        .step-box.quality { border-color: var(--primary); border-left: 6px solid var(--primary); }
+        .step-box.syntax { border-color: var(--accent); border-left: 6px solid var(--accent); }
+
+        .step-title {
+            margin: 0 0 10px 0;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .step-description {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+        }
+
+        .prompt-box {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-family: ui-monospace, monospace;
+            font-size: 0.8rem;
+            border-left: 4px solid #6366f1;
+            margin-bottom: 15px;
+        }
+
+        /* METRICHE */
+        .metrics-bar {
+            display: flex;
+            gap: 15px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px dashed #cbd5e1;
+            justify-content: center;
+        }
+
+        .metric-badge {
+            font-weight: 700;
+            font-size: 0.9rem;
+            padding: 4px 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .score-q { background: #e0e7ff; color: #3730a3; }
+        .score-d { background: #fce7f3; color: #be185d; }
+
+        /* DIVISORE DI FASE */
+        .phase-divider {
+            position: relative;
+            margin: 40px 0;
+            text-align: center;
+            z-index: 2;
+        }
+
+        .phase-divider span {
+            background-color: var(--text-main);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        
+        .phase-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background-color: var(--text-main);
+            z-index: -1;
+            opacity: 0.2;
+        }
+
+        /* CONNETTORE SVG A Y */
+        .y-connector {
+            width: 100%;
+            height: 60px;
+            display: block;
+            margin: -5px 0 -10px 0;
+            overflow: visible;
+        }
+
+        /* INFO MODELLO (NUOVO) */
+        .model-info {
+            margin-top: 50px;
+            padding: 16px;
+            background-color: #0f172a;
+            color: #f8fafc;
+            text-align: center;
+            border-radius: 8px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+            border-left: 4px solid #38bdf8;
+            letter-spacing: 0.5px;
+        }
+
+        .model-info span {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Pipeline Generazione Risposte</h1>
+
+    <div class="model-info">
+        <span>Gemma 4 26B (GGUF quantizzato a 8-bit)</span>
+    </div>
+    
+    <div class="flow-split">
+        
+        <div class="flow-col">
+            <div class="col-header header-past">🕒 Passato </div>
+            
+            <div class="chat-container">
+                <span class="turn-label">Turno N-2</span>
+                <div class="chat-bubble bubble-user">Can you suggest some mellow electronic tracks to help me focus while I work?</div>
+                <div class="chat-bubble bubble-assistant">I think you'll also really dig 'Eyen.' It has a similar electronic and IDM vibe with a touch more rhythmic complexity and a nice ambient feel. Give it a listen!</div>
+                <span class="turn-label" style="margin-top: 10px;">Turno N-1</span>
+                <div class="chat-bubble bubble-user">This is a good direction! I like the ambient feel, but I need something that is more consistently in the background and not too rhythmically complex. Could you suggest something mostly instrumental and not too distracting, maybe a bit more ambient?</div>
+                <div class="chat-bubble bubble-assistant">Awesome, glad 'Eyen' hit the spot! How about we try 'Assault On Precinct Zero' next? It's another Plaid gem that delves into their more experimental and atmospheric side, while keeping that signature IDM groove you love. I think you'll appreciate the intricate layers in this one.</div>
+            </div>
+
+            <div class="arrow-down">↓</div>
+
+            <div class="step-box past-action">
+                <h3 class="step-title">Step 0: Riassunto</h3>
+                <div class="step-description">Trasformazione del contesto storico in un formato di facile utilizzo, estraendo le preferenze esplicite e i vincoli negativi scaturiti dalla conversazione.</div>
+                <div class="prompt-box">
+                    You are a strict data-extraction analyst for a recommendation system. 
+                    Extract a concise bulleted list of the user's explicit preferences, negative preferences (dislikes), and hard constraints from the chat history. 
+                    Output ONLY the bullet points. Do not include any introductory or concluding text.
+                </div>
+            </div>
+        </div>
+
+        <div class="flow-col">
+            <div class="col-header header-present">💬 Presente </div>
+            
+            <div class="chat-container">
+                <span class="turn-label">Turno N </span>
+                <div class="chat-bubble bubble-current">This is interesting, and I appreciate the atmospheric elements. However, for focused work, I need something even more subdued. Something with a calm, flowing rhythm that helps concentration, not too energetic or with too many distinct layers that grab attention.</div>
+            </div>
+
+            <div class="present-wait">
+                ↑ Isolato dalla cronologia.<br>In attesa del riassunto...
+            </div>
+        </div>
+    </div>
+
+    <svg class="y-connector" viewBox="0 0 100 40" preserveAspectRatio="none">
+        <path d="M 25 0 V 20 H 50 V 40" fill="none" stroke="#2563eb" stroke-width="2" vector-effect="non-scaling-stroke" />
+        <path d="M 75 0 V 20 H 50 V 40" fill="none" stroke="#166534" stroke-width="2" vector-effect="non-scaling-stroke" />
+        <polygon points="47,36 53,36 50,40" fill="#2563eb" />
+    </svg>
+
+    <div class="step-box quality">
+        <h2 class="step-title">Step 1: Generazione Risposta</h2>
+        <div class="step-description">
+            Inietta il <strong>Riassunto Storico</strong> nel System Prompt e lo incrocia con la richiesta attuale. La chiamata all'LLM implementa un <strong>retry loop dinamico</strong> che rileva i troncamenti (<code>finish_reason == "length"</code>) e riesegue la generazione aumentando i token massimi, salvando l'output parziale in JSONL.
+        </div>
+        <div class="prompt-box">
+            You are an expert conversational recommender system. Your goal is to provide highly personalized recommendations with exceptional explanation quality.<br><br>
+                    
+            You have access to a summary of the user's past preferences from this conversation:<br>
+            &lt;user_history_summary&gt;<br>
+            {generated_summary_from_prompt_1}<br>
+            &lt;/user_history_summary&gt;<br><br>
+
+            Follow these strict guidelines:<br>
+            1. Analyze the Context: Evaluate the user's immediate query alongside their past preferences from the &lt;user_history_summary&gt;.<br>
+            2. Acknowledge and Validate: Warmly acknowledge their immediate request while subtly referencing you remember their past context.<br>
+            3. Recommend with Precision: Clearly state the recommendation.<br>
+            4. Explain the 'Why' (Crucial): Explicitly connect the features of the recommendation to BOTH their immediate query AND their historical preferences.<br>
+            5. Maintain Conversational Tone: Be engaging, structured, and avoid robotic listing.
+        </div>
+        <div class="metrics-bar">
+            <span class="metric-badge score-q"> LLM score: 5</span>
+            <span class="metric-badge score-d"> Lexical Diversità: 0.65</span>
+        </div>
+    </div>
+
+    <div class="phase-divider">
+        <span>↓ Fine Generazione (Qualità) | Inizio Ottimizzazione Sintattica ↓</span>
+    </div>
+
+    <div style="text-align: center; margin: -20px 0 10px 0;"><span class="arrow-down">↓</span></div>
+    
+    <div class="step-box syntax">
+        <h2 class="step-title">Step 2: Compressione Lessicale</h2>
+        <div class="step-description">
+            Le risposte grezze vengono formattate tramite un <strong>template Jinja</strong> e passate a un secondo agente LLM con istruzioni di editing aggressivo. Il processo itera sull'intero dataset elaborato nello Step 1, protetto da salvataggi incrementali per garantire la ripresa automatica in caso di interruzione.
+        </div>
+        <div class="prompt-box">
+            You are an elite music journalist and precision copy editor. Your sole objective is to aggressively condense a provided music recommendation to maximize its lexical density.<br><br>
+
+            You must reduce the overall word count without losing any of the original meaning, tone, or specific musical insights.<br><br>
+
+            Apply these STRICT constraints:<br>
+            1. Surgical Trimming: Eliminate all conversational filler, weak verbs, unnecessary prepositions, and meandering transitions. Say in 5 words what the original took 12 to say.<br>
+            2. Zero Information Loss: You must retain every specific concrete detail, metaphor, and technical observation (e.g., "distorted fuzz", "syncopated high-hats") from the original text. Do not generalize; compress.<br>
+            3. Tone Preservation: Maintain the exact stylistic flair, attitude, and emotional resonance of the original text. <br>
+            4. Syntactic Density: Favor compound adjectives, appositives, and punchy phrasing over lengthy relative clauses (e.g., change "a track that builds a sense of dread" to "a dread-inducing track").<br>
+            6. Structural Phrase Ban: You are forbidden from using predictable AI boilerplate and repetitive transition phrases. Do not use for example "this track", "why it fits", "your preference", "rather than", "hit the".<br>
+            5. Output Format: You must respond with only your condensed response.
+        </div>
+        <div class="metrics-bar">
+            <span class="metric-badge score-q">LLM score: 5</span>
+            <span class="metric-badge score-d">Lexical Diversity: 0.88</span>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin: -10px 0 10px 0;"><span class="arrow-down">↓</span></div>
+
+    <div class="step-box syntax">
+        <h2 class="step-title">Step 3: Diversificazione Context-Aware</h2>
+        <div class="step-description">
+            Fase di raffinamento avanzato con <strong>prevenzione dinamica delle collisioni</strong>. Il sistema analizza il contesto (parole adiacenti) dei bigrammi sovrautilizzati e lo incrocia con le frequenze globali del dataset. Genera così una <em>avoidance list</em> mirata per ogni target, costringendo l'LLM a variare il vocabolario senza innescare accidentalmente nuove ripetizioni note.
+        </div>
+        <div class="prompt-box">
+            You are an expert copyeditor AI specialized in precision text refinement. Your sole objective is to take an existing text and eliminate a specific set of "Target Bigrams" provided by the user.<br><br>
+
+            Each Target Bigram comes with its own "Avoidance List." When replacing a specific Target Bigram, you are STRICTLY FORBIDDEN from using any words from its associated Avoidance List.<br><br>
+
+            CRITICAL RULES:<br>
+            1. Precision Editing: Modify only the exact words necessary to break the Target Bigrams. Leave the rest of the text completely untouched.<br>
+            2. Strict Mapping: You must accurately map each Target Bigram to its specific Avoidance List. Do not use a target's avoidance words when replacing that specific target.<br>
+            3. Minimal Intervention Strategy: Changing just one of the two words in a bigram is often the best approach. You may change both if altering just one would result in awkward phrasing.<br>
+            4. Quality Over Compliance: Do not replace a bigram if doing so requires rewriting the entire sentence, adding unnecessary filler, or destroying factual meaning. Natural flow takes priority.<br>
+            5. Structural Integrity: Strictly preserve all original formatting (e.g., Markdown, bullet points, bold text, paragraph breaks). Do not condense or expand the text beyond the required minor word swaps.<br>
+            6. No Conversational Filler: Output ONLY the revised text. Do not include introductory phrases, concluding remarks, or confirmations.   
+        </div>
+        <div class="metrics-bar">
+            <span class="metric-badge score-q">LLM score: 5</span>
+            <span class="metric-badge score-d">Lexical Diversity: 0.95</span>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

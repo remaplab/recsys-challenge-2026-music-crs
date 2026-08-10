@@ -1,0 +1,14 @@
+**Explicit Preferences**
+* Classic Country
+* Americana
+* Narrative-driven songs
+* Songs with strong storytelling elements
+* Songs with specific imagery
+* Songs with historical or biographical narratives (songs about real people or specific events)
+* Serious storytelling
+
+**Dislikes**
+* None explicitly stated (user redirected suggestions that did not meet specific thematic criteria)
+
+**Hard Constraints**
+* None specified

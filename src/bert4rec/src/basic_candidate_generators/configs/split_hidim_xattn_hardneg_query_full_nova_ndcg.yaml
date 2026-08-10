@@ -1,0 +1,64 @@
+model: split_hidim_xattn_hardneg_query_full_nova
+class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryFullNOVARecommender
+module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query_full_nova
+urm_mode: session
+inference_mode: standard
+best_params:
+  batch_size: 64
+  hidden_size: 256
+  n_layers: 3
+  dropout: 0.25078800069413004
+  mask_prob: 0.25474286869030927
+  lr: 0.00043475916969882157
+  weight_decay: 0.001420392331068777
+  init_tau: 0.1604764815140228
+  lr_final_factor: 0.02327911101158752
+  artist_dim: 384
+  album_dim: 192
+  tag_dim: 128
+  hardneg_k: 21
+  hardneg_weight: 0.6035189771903146
+  hardneg_tau: 0.18936008276355787
+fixed_params:
+  feature_emb_paths:
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet
+  feature_modalities:
+  - metadata-qwen3_embedding_0.6b
+  - cf-bpr
+  - audio-laion_clap
+  max_seq_len: 50
+  n_heads: 8
+  epochs: 200
+  warmup_ratio: 0.1
+  val_ratio: 0.1
+  early_stop_patience: 20
+  max_future_years: 0.0
+  icm_compressed_dim: 256
+  device: auto
+  query_emb_dir: models/query_emb_cache/qwen3_frozen
+  query_cache_splits:
+  - train
+  - dev
+  - blind_a
+  early_stop_metric: ndcg
+  eval_min_turn: 2
+  eval_ndcg_k: 20
+cv_results:
+  primary_metric: ndcg@20
+  primary_value: 0.257484
+  ndcg:
+    20: 0.257484
+  recall:
+    20: 0.52394
+    200: 0.722453
+lb_selection:
+  lb_stat: cvar
+  fold_lb_value: 0.295936
+  fold_trial_number: 44
+  rank: 7
+  cv_lb_mean: 0.280296

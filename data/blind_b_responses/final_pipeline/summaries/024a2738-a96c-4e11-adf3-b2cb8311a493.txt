@@ -1,0 +1,13 @@
+**Explicit Preferences**
+* Alt-country genre
+* Alt-country rock vibe
+* Female vocals
+* Poetic lyrics
+* Engaging/powerful delivery
+
+**Negative Preferences**
+* Direct inner monologues
+
+**Hard Constraints**
+* Songs should feel like a quiet, personal story
+* Songs should feel like an overheard conversation or a brief captured moment

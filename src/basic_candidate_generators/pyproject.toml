@@ -1,0 +1,59 @@
+[project]
+name = "basic-candidate-generators"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "matplotlib>=3.10.9",
+    "numpy>=2.2.6",
+    "pandas>=2.3.3",
+    "polars>=1.40.1",
+    "pyarrow>=24.0.0",
+    "pyyaml>=6.0.3",
+    "scipy>=1.15.3",
+    "pybase64>=1.4.0",
+    "torch==2.5.1",
+    "tqdm>=4.67.3",
+    "numba>=0.65.1",
+    "scikit-learn>=1.7.2",
+    "optuna>=4.0.0",
+    "optuna-dashboard>=0.20.0",
+    "seaborn>=0.13.2",
+    "ipykernel>=7.2.0",
+    "scipy-stubs>=1.15.3.0",
+    "jupyter>=1.1.1",
+    "ipywidgets>=8.1.8",
+    "lightning>=2.6.1",
+    "optuna-integration[pytorch-lightning]>=4.8.0",
+    "nvidia-ml-py>=12.0.0",
+    "psutil>=5.9.0",
+    "networkx>=3.4.2",
+    "python-louvain>=0.16",
+    "shap>=0.49.1",
+    "xgboost>=3.2.0",
+    "hdbscan>=0.8.43",
+    "kneed>=0.8.6",
+    "umap-learn>=0.5.12",
+    "faiss-cpu>=1.14.2",
+    "statsmodels>=0.14.6",
+    "sentence-transformers>=5.4.1",
+    "transformers==4.53.3",
+    "huggingface-hub>=0.34.0,<1.0.0",
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu121"
+url = "https://download.pytorch.org/whl/cu121"
+explicit = true
+
+[tool.uv.sources]
+torch = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'linux'" }
+]
+torchvision = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'linux'" }
+]
+torchaudio = [
+    { index = "pytorch-cu121", marker = "sys_platform == 'linux'" }
+]

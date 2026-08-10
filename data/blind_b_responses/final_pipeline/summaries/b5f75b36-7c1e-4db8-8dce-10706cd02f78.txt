@@ -1,0 +1,11 @@
+**Explicit Preferences**
+* Loves the band RVIVR
+
+**Negative Preferences**
+* Does not want more recommendations for RVIVR at this time
+
+**Hard Constraints**
+* Seeking a specific album based on cover art description:
+    * Bright yellow background
+    * Cartoon animals playing musical instruments
+    * Specific characters: green dinosaur with a guitar, white rabbit with a bass, and bats holding horns

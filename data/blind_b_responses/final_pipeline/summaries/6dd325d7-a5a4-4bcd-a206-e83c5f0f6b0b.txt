@@ -1,0 +1,14 @@
+**Explicit Preferences**
+* Genre: Indie pop
+* Lyrical themes:
+    * Feeling stuck, lost, or struggling internally
+    * Internal conflict or feeling disconnected/unsure
+    * Feeling trapped or time slipping away
+    * Vivid imagery of physical discomfort (e.g., aching skin, brittle bones)
+    * Distinct characters or quirky lifestyles
+
+**Negative Preferences**
+* Songs where the lyrical content does not match the specific requested theme, even if the musical vibe is correct.
+
+**Hard Constraints**
+* Must prioritize specific lyrical content over general musical "vibe" or genre.

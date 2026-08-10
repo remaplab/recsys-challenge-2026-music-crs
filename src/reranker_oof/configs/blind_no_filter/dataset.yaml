@@ -1,0 +1,67 @@
+name: blind_no_filter
+
+cg_store: models/CG_crossvalidation
+cg_folder_map: {}
+
+filenames:
+  train:   "fold_{fold}_oof_cg_val.parquet"
+  val:     "fold_{fold}_oof_reranker_val.parquet"
+  holdout: "holdout_candidates.parquet"
+  blind_b: "blind_b_candidates.parquet"
+  blind_a: "blind_a_all_turns_candidates.parquet"
+
+cgs:
+  - bm25_colisten_oneshot
+  - tower_a_oneshot
+  - emb_item_knn_8b_session_dro
+  - hybrid_all_qwen_session_dro
+  - tower_ensemble_session_dro
+  - tower_cf_ensemble_session_dro
+  - heuristic_v2_hybrid_session_dro
+  - heuristic_v3_session_dro
+  - query_full_multibehav_alltext_softor_session
+  - query_full_multibehav_alltext_softor_session_ndcg
+  - split_hidim_xattn_hardneg_query_full_dif_session_ndcg
+  - split_hidim_xattn_hardneg_query_full_nova_session_ndcg
+  - split_hidim_xattn_hardneg_query_full_noiserobust_session
+  - split_hidim_xattn_hardneg_session_ndcg
+
+
+
+
+
+max_candidates_per_cg: 200
+top_k: 200
+groups_per_chunk: 900
+
+turn_buckets:
+  - {name: t1,   turns: [1]}
+  - {name: t2_5, turns: [2, 3, 4, 5]}
+  - {name: t6_8, turns: [6, 7, 8]}
+
+weights: {low: 1.0e-4, high: 1.0, log: true}
+rrf_k:   {low: 1, high: 200}
+
+test_tracks:
+  enabled: false
+  path: data/talkpl-ai/TalkPlayData-Challenge-Track-Metadata/data/test_tracks-00000-of-00001.parquet
+
+
+embeddings:
+  enabled: true
+
+cg_calibration:
+  enabled: true
+  method: isotonic
+  feature: reciprocal_rank
+  alpha: 0.1
+
+
+tune:
+  target: blind_b          
+  metric: recall@200       
+  rrf_out: configs/blind_no_filter/rrf_best.yaml
+
+optuna:
+  n_trials: 500
+  sampler: tpe

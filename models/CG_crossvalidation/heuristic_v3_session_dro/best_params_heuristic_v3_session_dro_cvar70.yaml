@@ -1,0 +1,59 @@
+class: HeuristicV3
+module: heuristic.heuristic_v3
+inference_mode: standard
+urm_mode: session
+robust:
+  mode: cvar
+  alpha: 0.7
+  metric: recall@200
+  strategy: calibrated
+study: heuristic_v3_session_dro_cvar70
+best_trial: 10
+cv_score: 0.6884754430943048
+posi_score: 0.7071116057621956
+posi_per_fold:
+- 0.7469466527708507
+- 0.7276931914410887
+- 0.6754883592435763
+- 0.6670044788139637
+- 0.7184253465414986
+eb_survivors:
+- 1
+- 2
+- 3
+- 4
+- 5
+- 8
+- 10
+- 18
+best_params:
+  album_last: 0.19751602142350277
+  artist_last: 8.304704493382935
+  album_any: 0.2966749263379498
+  artist_any: 0.2164845803348059
+  year: 0.7337038508437288
+  pop_match: 4.813037349958557
+  pop_z: 0.7904389031079817
+  cat_A: 6.194244408825433
+  cat_B: 2.466912179255754
+  cat_C: 3.7567998085919987
+  cat_D: 9.052741386302577
+  cat_E: 8.350782508001592
+  cat_F: 6.921674937578223
+  cat_G: 3.9019618612250375
+  cat_H: 2.76655051635182
+  cat_I: 7.732875693726223
+  cat_J: 4.86575172015031
+  cat_K: 2.059591989838571
+  spec_HH: 4.164070576138422
+  spec_LH: 0.45365176526416146
+  spec_HL: 5.010622118839175
+  spec_LL: 5.753799535042236
+  decade_top_n: 234
+  w_rrf_oneshot: 4.396493999073626
+  w_tower_cf: 6.776171070147591
+  rrf_k: 22
+fixed_params:
+  rrf_oneshot_datasets_dir: models/CG_crossvalidation/rrf_oneshot/datasets
+  tower_cf_datasets_dir: models/CG_crossvalidation/tower_cf_ensemble_session_dro/datasets
+  fallback_out_n: 200

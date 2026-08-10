@@ -1,0 +1,11 @@
+**Explicit Preferences**
+* Metalcore genre
+* High energy/intensity
+
+**Negative Preferences**
+* General recommendations based on artist similarity rather than technical specifications
+* Vague recommendations that do not meet specific musical criteria
+
+**Hard Constraints**
+* Exact tempo: 155.01 bpm
+* Key: C minor

@@ -1,0 +1,1310 @@
+# Cross-validation hyperparameter tuning config.
+# One Optuna study per model. Each trial = 5 folds.
+# Run: uv run python launchers_crossvalidation/tune_crossvalidation.py --model <model_name>
+
+data:
+  splitk_dir: data/splitK
+  track_metadata_path: data/talkpl-ai/TalkPlayData-Challenge-Track-Metadata/data/all_tracks-00000-of-00001.parquet
+  n_folds: 5
+
+evaluation:
+  top_k: 700
+  remove_seen: true
+  primary_metric: recall@200
+  recall_ks: [20, 100, 150, 200, 300, 400, 500, 600, 700]
+  ndcg_ks:   [20, 100, 200, 300, 400, 500, 600, 700]
+
+pruning:
+  n_startup_trials: 5   # don't prune first 5 trials
+  n_warmup_steps: 1     # start reporting after fold 1 (prune after fold 2+)
+
+# ---------------------------------------------------------------------------
+# Per-model configs
+# ---------------------------------------------------------------------------
+# Each model entry:
+#   class:          Python class name
+#   module:         dotted module path (relative to src/)
+#   inference_mode: "standard" (default) or "text" (TextCGRecommender subclasses)
+#   n_trials:       total Optuna trials (including any already completed)
+#   n_jobs:         parallel Optuna workers (set 1 for GPU models)
+#   urm_mode:       "session" or "user"
+#   fixed_params:   params passed to the recommender but NOT tuned
+#   search_space:   tunable params with Optuna spec
+#     type:          int | float (required when YAML parses low/high as float)
+#     low, high:     search bounds
+#     log:           true for log-scale (optional)
+#     step:          discrete step (optional)
+#     choices:       categorical list (mutually exclusive with low/high)
+#     conditional_on: {other_param: value} — only pass to rec when condition met
+
+models:
+
+  item_knn:
+    class: ItemKNNRecommender
+    module: recommenders.item_knn
+    n_trials: 300
+    n_jobs: 2
+    urm_modes: [session, user]
+    fixed_params: {}
+    search_space:
+      k:          {low: 10,   high: 800,  log: true,  type: int}
+      shrink:     {low: 0.0,  high: 1000.0,           type: float}
+      icm_weight: {low: 0.0,  high: 1.0,              type: float}
+      k_icm:      {low: 10,   high: 500,  log: true,  type: int}
+
+  rp3beta:
+    class: RP3BetaRecommender
+    module: recommenders.rp3beta
+    n_trials: 300
+    n_jobs: 2
+    urm_modes: [session, user]
+    fixed_params: {}
+    search_space:
+      top_k:      {low: 10,  high: 500,  step: 2,   type: int}
+      alpha:      {low: 0.1, high: 2.0,             type: float}
+      beta:       {low: 0.0, high: 1.0,             type: float}
+      icm_weight: {low: 0.0, high: 1.0,             type: float}
+      k_icm:      {low: 10,  high: 500,  log: true, type: int}
+
+  slim_bpr:
+    class: SLIMBPRRecommender
+    module: recommenders.slim_bpr
+    n_trials: 200
+    n_jobs: 1
+    urm_modes: [session, user]
+    fixed_params:
+      workers: 8
+    search_space:
+      top_k:         {low: 10,    high: 500,  step: 10,  type: int}
+      epochs:        {low: 10,    high: 300,  step: 10,  type: int}
+      learning_rate: {low: 0.001, high: 0.5,  log: true, type: float}
+      reg_pos:       {low: 1.0e-5, high: 0.1, log: true, type: float}
+      reg_neg:       {low: 1.0e-5, high: 0.1, log: true, type: float}
+      icm_weight:    {low: 0.0,   high: 1.0,            type: float}
+      k_icm:         {low: 10,    high: 500,  log: true, type: int}
+
+  slim_elasticnet:
+    class: SLIMElasticNetRecommender
+    module: recommenders.slim_elasticnet
+    n_trials: 200
+    n_jobs: 1
+    urm_modes: [session, user]
+    fixed_params:
+      workers: 15
+    search_space:
+      top_k:      {low: 10,     high: 1000, step: 5,   type: int}
+      alpha:      {low: 1.0e-5, high: 1.0,  log: true, type: float}
+      l1_ratio:   {low: 0.0,    high: 1.0,             type: float}
+      max_iter:   {low: 50,     high: 500,  step: 10,  type: int}
+      icm_weight: {low: 0.0,    high: 1.0,             type: float}
+      k_icm:      {low: 10,     high: 500,  log: true, type: int}
+
+  gf_cf:
+    class: GFCFRecommender
+    module: recommenders.gfcf
+    n_trials: 200
+    n_jobs: 1
+    urm_modes: [session, user]
+    fixed_params: {}
+    search_space:
+      K:           {low: 64,  high: 2048, step: 64,  type: int}
+      filter_type: {choices: [linear, power]}
+      alpha:       {low: 0.1, high: 5.0,  log: true, type: float}
+      degree_exp:  {low: 0.0, high: 1.0,             type: float}
+      beta:        {low: 0.5, high: 2.0,             type: float}
+
+  session_knn:
+    class: SessionKNNRecommender
+    module: recommenders.session_knn
+    n_trials: 200
+    n_jobs: 4
+    urm_modes: [session]
+    fixed_params: {}
+    search_space:
+      k: {low: 10, high: 1000, log: true, type: int}
+
+  sequential_rules:
+    class: SequentialRulesRecommender
+    module: recommenders.sequential_rules
+    n_trials: 100
+    n_jobs: 4
+    urm_modes: [session]
+    fixed_params: {}
+    search_space:
+      max_dist: {low: 1, high: 30, type: int}
+
+  pure_svd:
+    class: PureSVDRecommender
+    module: recommenders.pure_svd
+    n_trials: 100
+    n_jobs: 4
+    urm_modes: [session, user]
+    fixed_params: {}
+    search_space:
+      n_factors: {low: 32, high: 512, log: true, type: int}
+
+  prod2vec:
+    class: Prod2VecRecommender
+    module: recommenders.prod2vec
+    n_trials: 150
+    n_jobs: 4
+    urm_modes: [session, user]
+    fixed_params: {}
+    search_space:
+      n_factors: {low: 50,  high: 400, log: true, type: int}
+      neg:       {low: 1,   high: 20,             type: int}
+
+  ials:
+    class: IALSRecommender
+    module: recommenders.ials
+    n_trials: 200
+    n_jobs: 2
+    urm_modes: [session, user]
+    fixed_params: {}
+    search_space:
+      n_factors: {low: 32,  high: 256, log: true, type: int}
+      reg:       {low: 0.1, high: 100, log: true, type: float}
+      alpha:     {low: 5.0, high: 100.0,          type: float}
+      iters:     {low: 5,   high: 20,             type: int}
+
+  multvae:
+    class: MultVAERecommender
+    module: recommenders.multvae
+    n_trials: 150
+    n_jobs: 1
+    urm_modes: [session, user]
+    fixed_params:
+      batch_size: 512
+      total_anneal_steps: 200000
+      weight_decay: 1.0e-5
+    search_space:
+      hidden_dim:    {low: 200,    high: 800,   step: 100,  type: int}
+      latent_dim:    {low: 64,     high: 512,   step: 32,   type: int}
+      dropout:       {low: 0.1,    high: 0.7,               type: float}
+      beta:          {low: 0.05,   high: 0.5,   log: true,  type: float}
+      learning_rate: {low: 1.0e-4, high: 5.0e-3, log: true, type: float}
+      epochs:        {low: 20,     high: 150,   step: 10,   type: int}
+      anneal_cap:    {low: 0.05,   high: 0.5,               type: float}
+      use_icm:       {choices: [0, 1]}
+      icm_weight:    {low: 0.1, high: 0.8, type: float, conditional_on: {use_icm: 1}}
+
+  recvae:
+    class: RecVAERecommender
+    module: recommenders.recvae
+    n_trials: 100
+    n_jobs: 1
+    urm_modes: [session, user]
+    fixed_params:
+      batch_size: 512
+    search_space:
+      hidden:    {low: 200,    high: 800,    step: 100,  type: int}
+      latent:    {low: 64,     high: 512,    step: 32,   type: int}
+      dropout:   {low: 0.1,    high: 0.7,               type: float}
+      gamma:     {low: 1.0e-4, high: 0.1,   log: true,  type: float}
+      lr:        {low: 1.0e-4, high: 5.0e-3, log: true, type: float}
+      epochs:    {low: 20,     high: 100,    step: 10,   type: int}
+      enc_steps: {choices: [1, 2, 3]}
+      dec_steps: {choices: [1, 2]}
+
+  tfidf_cg:
+    class: TFIDFTextCG
+    module: recommenders.text_cg
+    inference_mode: text
+    n_trials: 100
+    n_jobs: 4
+    urm_modes: [session]
+    fixed_params: {}
+    search_space:
+      max_features: {low: 10000, high: 100000, step: 10000, type: int}
+      ngram_max:    {choices: [1, 2]}
+      cf_weight:    {low: 0.0, high: 0.8, type: float}
+
+  lightfm:
+    class: LightFMRecommender
+    module: recommenders.lightfm_rec
+    n_trials: 300
+    n_jobs: 2
+    urm_modes: [session, user]
+    fixed_params:
+      num_threads: 4
+    search_space:
+      no_components:  {low: 32,    high: 256,  log: true, type: int}
+      loss:           {choices: [warp, bpr]}
+      learning_rate:  {low: 1.0e-3, high: 0.5, log: true, type: float}
+      item_alpha:     {low: 1.0e-8, high: 1.0e-3, log: true, type: float}
+      user_alpha:     {low: 1.0e-8, high: 1.0e-3, log: true, type: float}
+      epochs:         {low: 10,   high: 100,  step: 5,   type: int}
+
+  heuristic:
+    class: HeuristicRecommender
+    module: heuristic.heuristic_v0
+    n_trials: 400
+    n_jobs: 5
+    urm_modes: [session]
+    fixed_params: {}
+    search_space:
+      album_last:   {low: 0.0,  high: 10.0,            type: float}
+      artist_last:  {low: 0.0,  high: 10.0,            type: float}
+      album_any:    {low: 0.0,  high: 10.0,            type: float}
+      artist_any:   {low: 0.0,  high: 10.0,            type: float}
+      year:         {low: 0.0,  high: 10.0,            type: float}
+      pop_match:    {low: 0.0,  high: 10.0,            type: float}
+      pop_z:        {low: 0.0,  high: 10.0,            type: float}
+      cat_A:        {low: 0.2,  high: 10.0,            type: float}
+      cat_B:        {low: 0.2,  high: 10.0,            type: float}
+      cat_C:        {low: 0.2,  high: 10.0,            type: float}
+      cat_D:        {low: 0.2,  high: 10.0,            type: float}
+      cat_E:        {low: 0.2,  high: 10.0,            type: float}
+      cat_F:        {low: 0.2,  high: 10.0,            type: float}
+      cat_G:        {low: 0.2,  high: 10.0,            type: float}
+      cat_H:        {low: 0.2,  high: 10.0,            type: float}
+      cat_I:        {low: 0.2,  high: 10.0,            type: float}
+      cat_J:        {low: 0.2,  high: 10.0,            type: float}
+      cat_K:        {low: 0.2,  high: 10.0,            type: float}
+      spec_HH:      {low: 0.2,  high: 10.0,            type: float}
+      spec_LH:      {low: 0.2,  high: 10.0,            type: float}
+      spec_HL:      {low: 0.2,  high: 10.0,            type: float}
+      spec_LL:      {low: 0.2,  high: 10.0,            type: float}
+      decade_top_n: {low: 50,   high: 1000, log: true, type: int}
+
+  bm25_cg:
+    class: BM25TextCG
+    module: recommenders.text_cg
+    inference_mode: text
+    n_trials: 300
+    n_jobs: 2
+    urm_modes: [session]
+    fixed_params: {}
+    search_space:
+      k1:           {low: 0.5,   high: 3.0,             type: float}
+      b:            {low: 0.3,   high: 1.0,             type: float}
+      max_features: {low: 10000, high: 100000, step: 10000, type: int}
+      cf_weight:    {low: 0.0,   high: 0.8,             type: float}
+
+  # -----------------------------------------------------------------------
+  # split_hidim family (current best CGs, devset wins on all 6 metrics
+  # for split_hidim alone; compounds win each metric separately).
+  # All three target recall@200 as Optuna objective.
+  #
+  # Shared:
+  #   - 3 dense modalities (qwen3 / cf-bpr / clap), ICM split into 7 sub-modalities
+  #   - artist/album SVD 256, tag SVD 128 (inherited from SplitHiDim defaults)
+  #   - n_heads fixed at 8 so head_dim = hidden_size/8 stays even for RoPE
+  #     (works for hidden ∈ {128, 192, 256, 384, 512})
+  # -----------------------------------------------------------------------
+
+  split_hidim_xattn:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256   # ignored by split variants (uses per-block dims)
+      device: "auto"
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+
+  split_hidim_xattn_hardneg:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+
+  # -----------------------------------------------------------------------
+  # split_hidim base (no xattn, no hardneg) — same base hyperparam space.
+  # -----------------------------------------------------------------------
+  split_hidim:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+
+  # -----------------------------------------------------------------------
+  # xattn FFN variants (glu / swiglu / mha). mha adds xattn_heads; swiglu
+  # adds mod_drop_p.
+  # -----------------------------------------------------------------------
+  split_hidim_xattn_glu:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnGLURecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_glu
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+
+  # Isolates modality dropout from the SwiGLU FFN bundled with it in _swiglu.
+  # Same search space as split_hidim_xattn + mod_drop_p; GELU FFN preserved.
+  split_hidim_xattn_moddrop:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnModDropRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_moddrop
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      mod_drop_p:       {low: 0.0,     high: 0.3,                type: float}
+
+  # -----------------------------------------------------------------------
+  # xattn + hardneg variants (glu / swiglu / mha / curriculum).
+  # -----------------------------------------------------------------------
+  split_hidim_xattn_hardneg_glu:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegGLURecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_glu
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+
+  # Isolates modality dropout from the SwiGLU FFN bundled with it in
+  # _hardneg_swiglu. Same search space as split_hidim_xattn_hardneg
+  # + mod_drop_p; GELU FFN preserved.
+  split_hidim_xattn_hardneg_moddrop:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegModDropRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_moddrop
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+      mod_drop_p:       {low: 0.0,     high: 0.3,                type: float}
+
+  # -----------------------------------------------------------------------
+  # split_hidim_xattn_hardneg + per-turn user-query injection (Qwen3 emb of
+  # the user's message + chat history + profile, dropped into the masked
+  # position at train and into the MASK position at inference). The current
+  # best variant ignores conversation text entirely; this closes that gap.
+  # Requires `models/query_emb_cache/qwen3_frozen/{train,dev,blind_a}.npy`
+  # (generate with embeddings-package/scripts/03_encode_queries.py).
+  # -----------------------------------------------------------------------
+  split_hidim_xattn_hardneg_query:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+      query_emb_dir: "models/query_emb_cache/qwen3_frozen"
+      query_cache_splits: ["train", "dev", "blind_a"]
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+
+  # -----------------------------------------------------------------------
+  # Design A of the query injection: query at EVERY position (not only the
+  # masked one). Same query cache as ..._hardneg_query. Inference threads
+  # per-prior turn_number from context_df through recommend -> score so each
+  # position's query is looked up correctly.
+  # -----------------------------------------------------------------------
+  split_hidim_xattn_hardneg_query_full:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryFullRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query_full
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+      query_emb_dir: "models/query_emb_cache/qwen3_frozen"
+      query_cache_splits: ["train", "dev", "blind_a"]
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+
+  # -----------------------------------------------------------------------
+  # query_full (Design A) + inference-time LATE-FUSION retrieval term:
+  #   score = (h_n . item_n)/tau + beta * (q_target_n . item_text_n)/tau_q
+  # The query is matched directly against each candidate's qwen3 text modality
+  # (same space), in addition to the transformer score. beta / tau_q are pure
+  # inference HPs (training is identical to query_full) but searched jointly.
+  # -----------------------------------------------------------------------
+  split_hidim_xattn_hardneg_query_full_latefusion:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryFullLateFusionRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query_full_latefusion
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+      query_emb_dir: "models/query_emb_cache/qwen3_frozen"
+      query_cache_splits: ["train", "dev", "blind_a"]
+      text_modality_index: 0
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+      fusion_beta:      {low: 0.05,    high: 3.0,    log: true,  type: float}
+      fusion_tau_q:     {low: 0.02,    high: 0.3,    log: true,  type: float}
+
+  # -----------------------------------------------------------------------
+  # query_full (Design A) + late-fusion retrieval term LEARNED during training:
+  #   logits = (out_n . warm_n)/tau + beta * (q_n . warm_text_n)/tau_q
+  # beta / tau_q are learnable scalars (init from fusion_beta / fusion_tau_q,
+  # kept fixed in fixed_params). Training is otherwise identical to query_full,
+  # so the base HP search space is the same; the model learns to be complementary
+  # to the retrieval term rather than double-counting topicality post-hoc.
+  # -----------------------------------------------------------------------
+  split_hidim_xattn_hardneg_query_full_trainfusion:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryFullTrainFusionRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query_full_trainfusion
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+      query_emb_dir: "models/query_emb_cache/qwen3_frozen"
+      query_cache_splits: ["train", "dev", "blind_a"]
+      text_modality_index: 0
+      # learnable fusion scalars — these are INIT values (small, ~parent at start)
+      fusion_beta: 0.1
+      fusion_tau_q: 0.1
+      fusion_learnable: true
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+
+  # -----------------------------------------------------------------------
+  # 4-way + SESSION-PRIOR taste variant. Identical to userhistmod except
+  # `query_fusion_source="session_taste"` (set in the subclass): per-sample
+  # mean(L2(item_encoder(context positions where labels == -100))) at train,
+  # mean(L2(item_encoder(prior warm items))) at inference. Distribution-
+  # aligned train↔test on the `taste` channel.
+  # -----------------------------------------------------------------------
+  split_hidim_xattn_hardneg_query_full_mha_userhistmod_sess:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryFullMHAUserHistModSessRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query_full_mha_userhistmod_sess
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 200
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 20
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+      query_emb_dir: "models/query_emb_cache/qwen3_frozen"
+      query_cache_splits: ["train", "dev", "blind_a"]
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.30,               type: float}
+      mask_prob:        {low: 0.15,    high: 0.55,               type: float}
+      lr:               {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.25,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+      xattn_heads:      {choices: [2, 4, 8]}
+      alpha_init:       {low: 0.05,    high: 0.30,               type: float}
+
+  # =======================================================================
+  # V2 search spaces — widened rails for the INFLUENTIAL pinned params only,
+  # identified by optuna_rail_check.py (rail-pinned AND high importance):
+  #     dropout    0.05–0.30 → 0.05–0.50
+  #     mask_prob  0.15–0.55 → 0.05–0.40   (floor lowered; high-mask was noise)
+  #     lr         3e-4–5e-3 → 1e-4–5e-3
+  #     init_tau   0.05–0.25 → 0.05–0.40
+  #     alpha_init 0.05–0.30 → 0.05–0.60   (mha_userhistmod variants only)
+  # Everything else (incl. the insensitive album/artist/tag/hidden/heads
+  # choices) is left UNCHANGED. Distinct model keys → fresh study DBs, so the
+  # existing studies are untouched.
+  # =======================================================================
+  split_hidim_xattn_hardneg_v2:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 300
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 30
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.50,               type: float}
+      mask_prob:        {low: 0.05,    high: 0.40,               type: float}
+      lr:               {low: 1.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.40,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+
+  split_hidim_xattn_hardneg_query_v2:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 300
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 30
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+      query_emb_dir: "models/query_emb_cache/qwen3_frozen"
+      query_cache_splits: ["train", "dev", "blind_a"]
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.50,               type: float}
+      mask_prob:        {low: 0.05,    high: 0.40,               type: float}
+      lr:               {low: 1.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.40,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+
+  split_hidim_xattn_hardneg_query_full_v2:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryFullRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query_full
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 256
+      epochs: 300
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 30
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+      query_emb_dir: "models/query_emb_cache/qwen3_frozen"
+      query_cache_splits: ["train", "dev", "blind_a"]
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.50,               type: float}
+      mask_prob:        {low: 0.05,    high: 0.40,               type: float}
+      lr:               {low: 1.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.40,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+
+  split_hidim_xattn_hardneg_query_full_mha_userhistmod_sess_v2:
+    class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryFullMHAUserHistModSessRecommender
+    module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query_full_mha_userhistmod_sess
+    n_trials: 50
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      max_seq_len: 50
+      n_heads: 8
+      batch_size: 128
+      epochs: 300
+      warmup_ratio: 0.1
+      val_ratio: 0.1
+      early_stop_patience: 30
+      max_future_years: 0.0
+      icm_compressed_dim: 256
+      device: "auto"
+      query_emb_dir: "models/query_emb_cache/qwen3_frozen"
+      query_cache_splits: ["train", "dev", "blind_a"]
+    search_space:
+      hidden_size:      {choices: [128, 192, 256, 384, 512]}
+      n_layers:         {low: 2,       high: 5,                  type: int}
+      dropout:          {low: 0.05,    high: 0.50,               type: float}
+      mask_prob:        {low: 0.05,    high: 0.40,               type: float}
+      lr:               {low: 1.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay:     {low: 3.0e-4,  high: 3.0e-2, log: true,  type: float}
+      init_tau:         {low: 0.05,    high: 0.40,   log: true,  type: float}
+      lr_final_factor:  {low: 0.01,    high: 0.15,   log: true,  type: float}
+      artist_dim:       {choices: [128, 192, 256, 384]}
+      album_dim:        {choices: [128, 192, 256, 384]}
+      tag_dim:          {choices: [64,  128, 192, 256]}
+      hardneg_k:        {low: 16,      high: 128,    log: true,  type: int}
+      hardneg_weight:   {low: 0.05,    high: 0.8,                type: float}
+      hardneg_tau:      {low: 0.03,    high: 0.3,    log: true,  type: float}
+      xattn_heads:      {choices: [2, 4, 8]}
+      alpha_init:       {low: 0.05,    high: 0.60,               type: float}
+
+  # -----------------------------------------------------------------------
+  # Pure query→track retrieval CG (Phase-1 of the query-retrieval line).
+  # Intent-only two-tower; objective = recall@200 (it is a candidate source).
+  # Strengthening it raises the union ceiling for the downstream query-gate.
+  # -----------------------------------------------------------------------
+  query_retrieval:
+    class: QueryRetrievalRecommender
+    module: recommenders.query_retrieval
+    n_trials: 40
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      feature_emb_paths:
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet"
+        - "data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet"
+      feature_modalities:
+        - "metadata-qwen3_embedding_0.6b"
+        - "cf-bpr"
+        - "audio-laion_clap"
+      query_emb_dir: "models/query_emb_cache/qwen3_frozen"
+      query_cache_splits: ["train", "dev", "blind_a"]
+      epochs: 40
+      batch_size: 512
+      max_future_years: 0.0
+      device: "auto"
+    search_space:
+      out_dim:      {choices: [128, 256, 384, 512]}
+      lr:           {low: 3.0e-4,  high: 5.0e-3, log: true,  type: float}
+      weight_decay: {low: 1.0e-5,  high: 3.0e-3, log: true,  type: float}
+      temperature:  {low: 0.03,    high: 0.15,   log: true,  type: float}
+      n_hardneg:    {choices: [0, 8, 16, 32, 64]}
+      n_neg:        {choices: [128, 256, 512]}
+
+  two_tower_v2:
+    class: TwoTowerV2Recommender
+    module: recommenders.two_tower_v2
+    n_trials: 100
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      raw_train_path:  data/talkpl-ai/TalkPlayData-Challenge-Dataset/data/train-00000-of-00001.parquet
+      raw_test_path:   data/talkpl-ai/TalkPlayData-Challenge-Dataset/data/test-00000-of-00001.parquet
+      user_meta_path:  data/talkpl-ai/TalkPlayData-Challenge-User-Metadata/data/all_users-00000-of-00001.parquet
+      text_model: all-MiniLM-L6-v2
+      patience: 5
+    search_space:
+      D:          {choices: [64, 128, 256]}
+      lr:         {low: 1.0e-4, high: 5.0e-3, log: true, type: float}
+      wd:         {low: 1.0e-5, high: 1.0e-3, log: true, type: float}
+      batch_size: {choices: [256, 512, 1024]}
+      max_ctx:    {low: 3, high: 10,           type: int}
+      dropout:    {low: 0.05, high: 0.3,       type: float}
+
+  two_tower_v2_improved:
+    class: TwoTowerV2Recommender
+    module: recommenders.two_tower_v2
+    n_trials: 100
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      raw_train_path:  data/talkpl-ai/TalkPlayData-Challenge-Dataset/data/train-00000-of-00001.parquet
+      raw_test_path:   data/talkpl-ai/TalkPlayData-Challenge-Dataset/data/test-00000-of-00001.parquet
+      user_meta_path:  data/talkpl-ai/TalkPlayData-Challenge-User-Metadata/data/all_users-00000-of-00001.parquet
+      text_model: all-MiniLM-L6-v2
+      patience: 4
+      early_stop_metric: ndcg
+      early_stop_k: 20
+    search_space:
+      D:               {choices: [64, 128, 256]}
+      lr:              {low: 5.0e-4, high: 3.0e-3, log: true, type: float}
+      wd:              {low: 5.0e-5, high: 8.0e-4, log: true, type: float}
+      batch_size:      {choices: [512, 1024]}
+      max_ctx:         {low: 2, high: 8, type: int}
+      dropout:         {low: 0.05, high: 0.25, type: float}
+      n_hard_neg:      {choices: [0, 8, 16, 32]}
+      hard_neg_weight: {choices: [0.25, 0.5, 1.0]}
+      recency_decay:   {choices: [1.0, 0.95, 0.9, 0.85]}
+
+  two_tower_v2_enhanced:
+    class: TwoTowerV2EnhancedRecommender
+    module: recommenders.two_tower_v2_enhanced
+    n_trials: 100
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      raw_train_path:  data/talkpl-ai/TalkPlayData-Challenge-Dataset/data/train-00000-of-00001.parquet
+      raw_test_path:   data/talkpl-ai/TalkPlayData-Challenge-Dataset/data/test-00000-of-00001.parquet
+      user_meta_path:  data/talkpl-ai/TalkPlayData-Challenge-User-Metadata/data/all_users-00000-of-00001.parquet
+      user_cf_paths:
+        - data/talkpl-ai/TalkPlayData-Challenge-User-Embeddings/data/train-00000-of-00001.parquet
+        - data/talkpl-ai/TalkPlayData-Challenge-User-Embeddings/data/test_warm-00000-of-00001.parquet
+        - data/talkpl-ai/TalkPlayData-Challenge-User-Embeddings/data/test_cold-00000-of-00001.parquet
+      track_embedding_paths:
+        - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet
+        - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet
+        - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet
+        - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet
+      qwen_track_cache_dir: src/embeddings-package/models/retrieval_text_towers/Qwen__Qwen3-Embedding-0.6B/dense_tracks_len256_poollast
+      imputed_metadata_embedding_path: data/imputed_embeddings/missing_track_metadata_qwen3_0.6b.parquet
+      track_modalities:
+        - metadata-qwen3_embedding_0.6b
+        - lyrics-qwen3_embedding_0.6b
+        - attributes-qwen3_embedding_0.6b
+        - audio-laion_clap
+        - image-siglip2
+      query_embedding_dir: models/query_emb_cache/qwen3_frozen
+      query_cache_splits: [train, dev, blind_a]
+      text_model: all-MiniLM-L6-v2
+      patience: 4
+      early_stop_metric: ndcg
+      early_stop_k: 20
+      use_user_cf: true
+      use_item_cf: true
+      item_cf_weight: 0.20
+    search_space:
+      D:               {choices: [64, 128, 256]}
+      lr:              {low: 5.0e-4, high: 3.0e-3, log: true, type: float}
+      wd:              {low: 5.0e-5, high: 8.0e-4, log: true, type: float}
+      batch_size:      {choices: [512, 1024]}
+      max_ctx:         {low: 2, high: 6, type: int}
+      dropout:         {low: 0.08, high: 0.30, type: float}
+      n_hard_neg:      {choices: [8, 16, 32]}
+      hard_neg_weight: {choices: [0.25, 0.5, 1.0]}
+      recency_decay:   {choices: [1.0, 0.95, 0.9, 0.85]}
+
+  lightfm_icm:
+    class: LightFMICMRecommender
+    module: recommenders.lightfm_icm
+    n_trials: 100
+    n_jobs: 1
+    urm_modes: [session, user]
+    fixed_params: {}
+    search_space:
+      n_components:  {low: 32,    high: 256,   log: true,  type: int}
+      learning_rate: {low: 1.0e-3, high: 0.1,  log: true,  type: float}
+      item_alpha:    {low: 1.0e-8, high: 1.0e-4, log: true, type: float}
+      user_alpha:    {low: 1.0e-8, high: 1.0e-4, log: true, type: float}
+      epochs:        {low: 10,    high: 80,    step: 5,     type: int}
+
+  two_tower:
+    class: TwoTowerRecommender
+    module: oneshot.twotower
+    n_trials: 300
+    n_jobs: 2
+    urm_modes: [session]
+    fixed_params:
+      batch_size: 512
+      epochs: 40
+    search_space:
+      hidden_dim:   {choices: [256, 512, 768, 1024]}
+      output_dim:   {choices: [64, 128, 256, 512]}
+      dropout_rate: {low: 0.0,    high: 0.5,               type: float}
+      temperature:  {low: 0.01,   high: 0.25,              type: float}
+      lr:           {low: 1.0e-4, high: 1.0e-2, log: true, type: float}
+      weight_decay: {low: 1.0e-6, high: 1.0e-2, log: true, type: float}
+
+  # --- embedding-based CGs (frozen Qwen3 towers) -------------------------
+  # Build the W_emb cache first:
+  #   uv run python -m src.embedding_based.build_emb_sim \
+  #     --track_emb_dir models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast \
+  #     --out models/embedding_sim/W_emb_qwen3_8b_k150.npz --k 150
+  # For 4B / 0.6B ablations, clone this block with the matching paths/model_size.
+  emb_item_knn_8b:
+    class: EmbeddingItemKNN
+    module: embedding_based.embedding_item_knn
+    n_trials: 120
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      emb_sim_path: models/embedding_sim/W_emb_qwen3_8b_k150.npz
+      model_size: qwen3_8b
+    search_space:
+      cf_weight:  {low: 0.0, high: 3.0,              type: float}
+      cf_k:       {low: 10,  high: 800,  log: true,  type: int}
+      shrink:     {low: 0.0, high: 1000.0,           type: float}
+      icm_weight: {low: 0.0, high: 3.0,              type: float}
+      k_icm:      {low: 10,  high: 500,  log: true,  type: int}
+
+  dense_query_8b:
+    class: DenseQueryCG
+    module: embedding_based.dense_query_cg
+    n_trials: 30
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      model_size: qwen3_8b
+    # training-free; only the future-track horizon is "tunable"
+    search_space:
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+
+  # RRF-fused hybrid. v1 = query/last-track emb + BM25 + TF-IDF.
+  hybrid_v1_8b:
+    class: HybridCG
+    module: embedding_based.hybrid_cg
+    n_trials: 60
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      version: 1
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      model_size: qwen3_8b
+    search_space:
+      k_rrf:            {choices: [10, 30, 60, 100]}
+      top_k_per_signal: {choices: [300, 600, 1000]}
+
+  # v2 = v1 + EmbeddingItemKNN + prev-N-track emb (+ user-thought emb if a
+  # thought_cache_root is supplied — deferred re-encode, off by default).
+  hybrid_v2_8b:
+    class: HybridCG
+    module: embedding_based.hybrid_cg
+    n_trials: 80
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      version: 2
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      emb_sim_path: models/embedding_sim/W_emb_qwen3_8b_k150.npz
+      model_size: qwen3_8b
+    search_space:
+      k_rrf:            {choices: [10, 30, 60, 100]}
+      top_k_per_signal: {choices: [300, 600, 1000]}
+      prev_n:           {low: 2, high: 8, type: int}

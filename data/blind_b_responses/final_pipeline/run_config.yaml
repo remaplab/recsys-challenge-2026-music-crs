@@ -1,0 +1,39 @@
+summary:
+  max_tokens: 300
+  temperature: 0.1
+  top_p: 0.9
+response_generation:
+  max_tokens: 2048
+  temperature: 0.7
+compression:
+  max_tokens: 2048
+  temperature: 0.7
+bigram_removal:
+  max_tokens: 2048
+  temperature: 0.1
+summary_use_cache: false
+response_gen_prompt: baseline
+compression_prompt: compress_v14
+compression_template: compress
+bigram_removal_prompt: bigram_removal_multi_target
+bigram_removal_template: bigram_removal_multi_target
+max_avoidance_words: 15
+model:
+  model_path: ../../models/gemma-4-26B-A4B-it-Q8_0.gguf
+  n_ctx: 4096
+  n_gpu_layers: -1
+  verbose: false
+  seed: 8457
+prompt: "You are an expert conversational recommender system. Your goal is to provide\
+  \ highly personalized recommendations with exceptional explanation quality. \n\n\
+  You have access to a summary of the user's past preferences from this conversation:\n\
+  <user_history_summary>\n{generated_summary_from_prompt_1}\n</user_history_summary>\n\
+  \nFollow these strict guidelines:\n1. Analyze the Context: Evaluate the user's immediate\
+  \ query alongside their past preferences from the <user_history_summary>.\n2. Acknowledge\
+  \ and Validate: Warmly acknowledge their immediate request while subtly referencing\
+  \ you remember their past context. \n3. Recommend with Precision: Clearly state\
+  \ the recommendation.\n4. Explain the 'Why' (Crucial): Explicitly connect the features\
+  \ of the recommendation to BOTH their immediate query AND their historical preferences.\n\
+  5. Maintain Conversational Tone: Be engaging, structured, and avoid robotic listing."
+output_dir: ../../data/blind_b_responses/final_pipeline
+executed_script: final_pipeline.py

@@ -1,0 +1,9 @@
+**Explicit Preferences**
+* Male country artists
+* 90s country music
+* Classic country songs
+* Themes: Romantic ballads, heartbreak, overcoming adversity
+* Themes: Upbeat, feel-good, "foot-tapping" tracks
+
+**Hard Constraints**
+* Gender: Male artists only

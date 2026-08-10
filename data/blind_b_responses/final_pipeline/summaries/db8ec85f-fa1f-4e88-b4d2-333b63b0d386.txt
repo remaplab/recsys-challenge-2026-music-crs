@@ -1,0 +1,19 @@
+**Explicit Preferences**
+* Mellow electronic music
+* Ambient electronic tracks
+* Atmospheric and smooth soundscapes
+* Calm, flowing rhythms
+* Sustained, unobtrusive sounds
+* Purely instrumental
+
+**Negative Preferences (Dislikes)**
+* High rhythmic complexity
+* Energetic tracks
+* Distinct layers that grab attention
+* Prominent melodies
+* Vocals/singing
+* Engaging or distracting elements
+
+**Hard Constraints**
+* Must be suitable for deep/focused work
+* Must be background music (not foreground listening)

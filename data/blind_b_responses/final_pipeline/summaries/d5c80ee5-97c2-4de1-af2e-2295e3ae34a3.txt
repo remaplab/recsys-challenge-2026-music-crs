@@ -1,0 +1,15 @@
+**Explicit Preferences**
+* Authentic 8-bit/chiptune sound.
+* Music that evokes classic arcade or Nintendo gameplay (e.g., level backgrounds, boss fights, level select screens).
+* Strong, memorable, and catchy melodies.
+* Retro video game nostalgia.
+* Themes of triumphant moments or iconic game soundtracks.
+* Styles similar to 2D racing games or platformers.
+
+**Negative Preferences**
+* Modern electronic/dance tracks with chiptune elements layered on top.
+* "Club" or high-energy house vibes.
+* Overwhelmingly frenetic or high-pressure/fast-action intensity.
+
+**Hard Constraints**
+* Must sound like it could actually fit within an old arcade or Nintendo game rather than being a modern interpretation.

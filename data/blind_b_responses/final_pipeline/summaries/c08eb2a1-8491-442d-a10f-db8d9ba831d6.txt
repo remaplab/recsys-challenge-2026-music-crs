@@ -1,0 +1,13 @@
+**Explicit Preferences**
+* Samba and MPB (Música Popular Brasileira)
+* Upbeat, driving rhythms for productivity
+* Dreamy, soulful, and melodic tracks for relaxation
+* Artists liked: Tulipa Ruiz, Beth Carvalho, Chico Buarque, Cartola, Marcelo Jeneci
+
+**Negative Preferences**
+* High-energy/aggressive tracks for work (e.g., Pennywise)
+* Tracks that are too calm or gentle for productivity (e.g., 'Jardim Do Éden', 'Folhas Secas', 'O Sol Nascerá')
+
+**Hard Constraints**
+* Productivity music must have a consistent, driving beat to maintain focus and pace.
+* Relaxation music must be suitable for unwinding/chilling out.

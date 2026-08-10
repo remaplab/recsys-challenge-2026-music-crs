@@ -1,0 +1,56 @@
+class: HybridAllQwen
+module: embedding_based.hybrid_all_qwen
+inference_mode: text
+urm_mode: session
+robust:
+  mode: cvar
+  alpha: 0.7
+  metric: recall@200
+  strategy: calibrated
+study: hybrid_all_qwen_session_dro_cvar70
+best_trial: 294
+cv_score: 0.6784774741133817
+posi_score: 0.6534542579909248
+posi_per_fold:
+- 0.701484646593039
+- 0.7067636923298266
+- 0.6009274168632945
+- 0.5920610107160279
+- 0.666034523452436
+eb_survivors:
+- 218
+- 234
+- 294
+- 363
+- 398
+- 400
+- 413
+- 424
+- 435
+- 436
+best_params:
+  k_rrf: 88
+  top_k_per_signal: 1776
+  prev_decay: 0.7962690972573039
+  icm_k: 127
+  w_tfidf: 12.848536805517261
+  w_bm25: 6.7082421939329695
+  w_icm: 18.797956822688377
+  w_last: 2.675322731695584
+  w_prev: 11.105832186002662
+  w_qemb: 19.990025036591426
+  w_last_4b: 3.112542845773625
+  w_prev_4b: 2.0665673481650013
+  w_last_0p6b: 0.8577482484338999
+  w_prev_0p6b: 15.545799623298137
+  bm25_k1: 4.479312811096248
+  bm25_b: 3.468534699873004
+fixed_params:
+  track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+  model_size: qwen3_8b
+  track_emb_dir_4b: models/retrieval_text_towers/Qwen__Qwen3-Embedding-4B/dense_tracks_len256_poollast
+  track_emb_dir_0p6b: models/retrieval_text_towers/Qwen__Qwen3-Embedding-0.6B/dense_tracks_len256_poollast
+  model_size_4b: qwen3_4b
+  model_size_0p6b: qwen3_0p6b
+  cache_dir: models/CG_crossvalidation/hybrid_all_qwen/cache
+  icm_cache_k: 400

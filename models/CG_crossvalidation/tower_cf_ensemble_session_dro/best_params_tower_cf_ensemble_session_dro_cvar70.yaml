@@ -1,0 +1,52 @@
+class: TowerCFEnsembleCG
+module: embedding_based.tower_cf_ensemble
+inference_mode: text
+urm_mode: session
+robust:
+  mode: cvar
+  alpha: 0.7
+  metric: recall@200
+  strategy: calibrated
+study: tower_cf_ensemble_session_dro_cvar70
+best_trial: 30
+cv_score: 0.6806904794130448
+posi_score: 0.478683886931315
+posi_per_fold:
+- 0.5370644897336294
+- 0.5295340621890997
+- 0.4625406021836475
+- 0.39056023445205684
+- 0.47372004609814106
+eb_survivors:
+- 30
+- 35
+- 36
+- 74
+- 75
+- 92
+- 93
+- 95
+- 96
+- 98
+best_params:
+  d: 256
+  hidden: 512
+  epochs: 5
+  lr: 0.0006787967839146137
+  tau: 0.056945259829606715
+  swag_k: 10
+  swag_max_rank: 15
+  swag_collect_every: 20
+  top_k_per_signal: 667
+  k_rrf: 43
+  w_towerA: 8.066494294884558
+  w_towerB: 2.128663522101559
+  w_towerC: 1.0749306750772563
+  w_dot: 5.175272399656347
+  w_tfidf: 8.28840748870862
+fixed_params:
+  track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+  query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+  img_parquet_glob: data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-*.parquet
+  cache_dir: models/CG_crossvalidation/tower_cf_ensemble_session_dro/cache
+  cf_column: cf-bpr

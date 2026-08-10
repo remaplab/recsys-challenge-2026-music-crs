@@ -1,0 +1,67 @@
+model: split_hidim_xattn_hardneg_query_full_noiserobust
+class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryFullNoiseRobustRecommender
+module: recommenders.feature_bert4rec_noise_robust
+urm_mode: session
+inference_mode: standard
+best_params:
+  batch_size: 128
+  hidden_size: 128
+  n_layers: 4
+  dropout: 0.1307952087421015
+  mask_prob: 0.47419831642263666
+  lr: 0.0005524805306649589
+  weight_decay: 0.00040733000373348435
+  init_tau: 0.0754986065490209
+  lr_final_factor: 0.020683805711679003
+  artist_dim: 128
+  album_dim: 384
+  tag_dim: 64
+  hardneg_k: 60
+  hardneg_weight: 0.052000970957961024
+  hardneg_tau: 0.14776179334477677
+  soft_eps: 0.031557395301960514
+  soft_m: 21
+  fn_skip: 2
+fixed_params:
+  feature_emb_paths:
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet
+  feature_modalities:
+  - metadata-qwen3_embedding_0.6b
+  - cf-bpr
+  - audio-laion_clap
+  max_seq_len: 50
+  n_heads: 8
+  epochs: 200
+  warmup_ratio: 0.1
+  val_ratio: 0.1
+  early_stop_patience: 25
+  max_future_years: 0.0
+  icm_compressed_dim: 256
+  device: auto
+  query_emb_dir: models/query_emb_cache/qwen3_frozen
+  query_cache_splits:
+  - train
+  - dev
+  - blind_a
+  early_stop_metric: recall
+  eval_min_turn: 2
+  eval_recall_k: 200
+cv_results:
+  primary_metric: recall@200
+  primary_value: 0.726733
+  ndcg:
+    20: 0.245719
+  recall:
+    20: 0.514182
+    200: 0.726733
+lb_selection:
+  lb_stat: cvar
+  fold_lb_value: 0.748756
+  fold_trial_number: 22
+  rank: 2
+  cv_lb_mean: 0.731783

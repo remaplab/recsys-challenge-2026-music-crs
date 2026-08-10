@@ -1,0 +1,4 @@
+{
+  "base": "Retrieve the single track that best satisfies the listener's stated goal. Treat any specific names, song titles, artists, albums, labels, years, or genres as hard constraints, and treat vaguer descriptions of mood, sound, or theme as soft preferences. When the listener is clearly recalling one specific track from memory, prioritize exact identification; when many tracks could satisfy the request, prioritize overall fit to the stated intent.",
+  "per_bucket": {}
+}

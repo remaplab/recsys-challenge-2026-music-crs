@@ -1,0 +1,64 @@
+model: split_hidim_xattn_hardneg_query_full_dif
+class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegQueryFullDIFRecommender
+module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg_query_full_dif
+urm_mode: session
+inference_mode: standard
+best_params:
+  batch_size: 64
+  hidden_size: 192
+  n_layers: 2
+  dropout: 0.23205408715296488
+  mask_prob: 0.2971132530877013
+  lr: 0.0017770651221363759
+  weight_decay: 0.0055485649769181754
+  init_tau: 0.11842964776211691
+  lr_final_factor: 0.012769944487690825
+  artist_dim: 128
+  album_dim: 192
+  tag_dim: 256
+  hardneg_k: 35
+  hardneg_weight: 0.752547491552551
+  hardneg_tau: 0.04117581451393252
+fixed_params:
+  feature_emb_paths:
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet
+  feature_modalities:
+  - metadata-qwen3_embedding_0.6b
+  - cf-bpr
+  - audio-laion_clap
+  max_seq_len: 50
+  n_heads: 8
+  epochs: 200
+  warmup_ratio: 0.1
+  val_ratio: 0.1
+  early_stop_patience: 20
+  max_future_years: 0.0
+  icm_compressed_dim: 256
+  device: auto
+  query_emb_dir: models/query_emb_cache/qwen3_frozen
+  query_cache_splits:
+  - train
+  - dev
+  - blind_a
+  early_stop_metric: ndcg
+  eval_min_turn: 2
+  eval_ndcg_k: 20
+cv_results:
+  primary_metric: ndcg@20
+  primary_value: 0.254513
+  ndcg:
+    20: 0.254513
+  recall:
+    20: 0.518686
+    200: 0.723862
+lb_selection:
+  lb_stat: cvar
+  fold_lb_value: 0.307183
+  fold_trial_number: 5
+  rank: 2
+  cv_lb_mean: 0.284856

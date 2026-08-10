@@ -1,0 +1,10 @@
+**Explicit Preferences**
+* Guilty Simpson (artist)
+* Collaborative duos/collaborative sounds
+* Gritty, raw, authentic, underground hip-hop
+
+**Negative Preferences**
+* Recommendations that deviate from the specific requested track
+
+**Hard Constraints**
+* Must play the specific track 'Czar Refaeli' by the artist CZARFACE

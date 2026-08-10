@@ -1,0 +1,3 @@
+* Explicit Preferences: Pat Metheny, jazz fusion, instrumental music, lushly orchestrated pieces
+* Negative Preferences: None
+* Hard Constraints: None

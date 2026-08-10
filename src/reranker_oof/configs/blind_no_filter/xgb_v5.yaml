@@ -1,0 +1,103 @@
+# XGBoost reranker — Blind-B overfit. Consumed by
+#   launchers_overfit_blind_b/s05_tune_xgb.py + s06_retrain_submit.py
+
+reranker: xgb
+device: cuda
+
+dataset_name: blind_no_filter
+run_tag: no_filter_v5
+metric: ndcg@20
+
+val_target: blind_b_last
+train_on_blind: true
+xgb_groups_per_chunk: null
+
+train_subsample:
+  max_groups_per_file: 150
+  seed: 42
+
+blind_raw: data/talkpl-ai/TalkPlayData-Challenge-Blind-B/data/test-00000-of-00001.parquet
+
+feat_cols_keep:
+  - emb_qwen_cand_query_cos
+  - is_warm_user
+  - std_calibrated_across_cgs
+  - track_release_year
+  - mean_calibrated_across_cgs
+  - artist_play_count
+  - calib_margin_vs_turn
+  - duration_diff_last_turn
+  - track_pop_pct
+  - emb_qwen_cand_prev_cos
+  - track_play_count
+  - score_minmax_query_full_multibehav_alltext_softor_session_ndcg
+  - track_duration
+  - age
+  - session_n_unique_artists
+  - album_play_count
+  - calib_at_minrank
+  - session_pop_z_score
+  - hist_duration_sum
+  - pop_bucket_match_last_turn
+  - score_minmax_query_full_multibehav_alltext_softor_session
+  - track_meta_popularity
+  - score_minmax_tower_cf_ensemble_session_dro
+  - calib_max_minus_mean
+  - meta_pop_z
+  - release_year_gap
+  - year_abs_diff_last_turn
+  - calib_x_logminrank
+  - pop_delta_last_turn
+  - is_long_tail
+  - best_sem_calib
+  - mean_set_size_across_cgs
+  - set_size_tower_a_oneshot
+  - set_size_split_hidim_xattn_hardneg_session_ndcg
+  - set_size_bm25_colisten_oneshot
+  - set_size_emb_item_knn_8b_session_dro
+  - set_size_hybrid_all_qwen_session_dro
+  - set_size_query_full_multibehav_alltext_softor_session
+
+
+optuna:
+  n_trials: 100
+  timeout_sec: null
+  sampler: tpe
+
+search_space:
+  objective:                      {type: categorical, choices: ["rank:ndcg", "rank:pairwise", "rank:map"]}
+  ndcg_exp_gain:                  {type: categorical, choices: [true, false]}
+  lambdarank_unbiased:            {type: categorical, choices: [true, false]}
+  lambdarank_score_normalization: {type: categorical, choices: [true, false]}
+  learning_rate:                  {type: loguniform, low: 0.01, high: 0.3}
+  max_depth:                      {type: int, low: 1, high: 30}
+  max_leaves:                     {type: int, low: 31, high: 255}
+  grow_policy:                    {type: categorical, choices: [depthwise, lossguide]}
+  min_child_weight:               {type: int, low: 1, high: 30}
+  gamma:                          {type: loguniform, low: 1.0e-4, high: 5.0}
+  reg_lambda:                     {type: loguniform, low: 0.0001, high: 10.0}
+  reg_alpha:                      {type: loguniform, low: 1.0e-4, high: 10.0}
+  subsample:                      {type: uniform, low: 0.5, high: 1.0}
+  sampling_method:                {type: categorical, choices: [uniform, gradient_based]}
+  colsample_bytree:               {type: uniform, low: 0.1, high: 1.0}
+  colsample_bylevel:              {type: uniform, low: 0.1, high: 1.0}
+  colsample_bynode:               {type: uniform, low: 0.1, high: 1.0}
+  lambdarank_pair_method:         {type: categorical, choices: [mean, topk]}
+  lambdarank_num_pair_per_sample: {type: int, low: 4, high: 64}
+
+
+static:
+  eval_metric: ["ndcg@10", "ndcg@50", "ndcg@200", "map@20", "pre@20", "ndcg@20"]
+  tree_method: hist
+  num_boost_round: 5000
+  early_stopping_rounds: 50
+  seed: 42
+  max_bin: 128
+
+prepare_kwargs:
+  max_bin: 128
+  max_quantile_batches: 8
+  cache_host_ratio: 0.0
+  dtype: float32
+  use_cuda_async_pool: true
+  use_rmm: false

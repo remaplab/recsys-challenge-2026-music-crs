@@ -1,0 +1,454 @@
+# DRO cross-validation HP tuning config.
+#
+# Differences from launchers_crossvalidation/configs/tune_crossvalidation.yaml:
+#   - `evaluation` points at BlindLikeEvaluator + Blind-A marginals
+#     (subsets-of-80 per fold instead of macro-by-turn micro-mean).
+#   - `robust` selects the Optuna objective shape (mean | cvar | group_dro).
+#
+# Model entries are kept identical to the non-DRO config so a side-by-side
+# `recall@200` vs `cvar` comparison is meaningful.
+#
+# Run:
+#   cd src/basic_candidate_generators
+#   uv run python -m launchers_dro.tune_crossvalidation_dro --model item_knn
+# ---------------------------------------------------------------------------
+
+data:
+  splitk_dir: data/splitK
+  track_metadata_path: data/talkpl-ai/TalkPlayData-Challenge-Track-Metadata/data/all_tracks-00000-of-00001.parquet
+  blind_parquet: data/talkpl-ai/TalkPlayData-Challenge-Blind-A/data/test-00000-of-00001.parquet
+  # v2 density-ratio: required for calibrated / density strategies AND for
+  # group_dro mode (group_id_mode column).
+  density_ratio: models/LowerBoundOptimization/distribution_shift_v2/density_ratio.parquet
+  n_folds: 5
+
+evaluation:
+  metric: recall@200
+  strategy: calibrated          # one of {calibrated, density, stratified}
+  n_subsets: 2000
+  subset_size: 80
+  strat_cols: [specificity, category, pop_mean, year_mean]
+  strategies: [calibrated, density, stratified]
+  seed: 42
+  top_k_inference: 700
+  cache_dir: models/CG_crossvalidation/eval_cache_dro
+  # PoSI stage (extract_best_params_dro.py) evaluates EB-survivors on the
+  # reranker_val OOF (5 × 4%) — separate eval pool, separate subset cache.
+  # Holdout_test is reserved for the reranker pipeline's own PoSI.
+  posi_cache_dir: models/CG_crossvalidation/eval_cache_dro_posi
+  posi_n_subsets: 2000
+
+robust:
+  mode: cvar                    # mean | cvar | group_dro
+  alpha: 0.7                    # CVaR level (mean over worst 30 % subsets)
+
+pruning:
+  n_startup_trials: 5
+  n_warmup_steps: 1
+
+# ---------------------------------------------------------------------------
+# Models — identical search spaces to the non-DRO config so the two studies
+# pick HPs from the same lattice and the only difference is the objective.
+# ---------------------------------------------------------------------------
+
+models:
+
+  item_knn:
+    class: ItemKNNRecommender
+    module: recommenders.item_knn
+    n_trials: 300
+    n_jobs: 4
+    urm_modes: [session, user]
+    fixed_params: {}
+    search_space:
+      k:          {low: 10,   high: 800,  log: true,  type: int}
+      shrink:     {low: 0.0,  high: 1000.0,           type: float}
+      icm_weight: {low: 0.0,  high: 1.0,              type: float}
+      k_icm:      {low: 10,   high: 500,  log: true,  type: int}
+
+  rp3beta:
+    class: RP3BetaRecommender
+    module: recommenders.rp3beta
+    n_trials: 300
+    n_jobs: 2
+    urm_modes: [session, user]
+    fixed_params: {}
+    search_space:
+      top_k:      {low: 10,  high: 500,  step: 2,   type: int}
+      alpha:      {low: 0.1, high: 2.0,             type: float}
+      beta:       {low: 0.0, high: 1.0,             type: float}
+      icm_weight: {low: 0.0, high: 1.0,             type: float}
+      k_icm:      {low: 10,  high: 500,  log: true, type: int}
+
+  recvae:
+    class: RecVAERecommender
+    module: recommenders.recvae
+    n_trials: 200
+    n_jobs: 2
+    urm_modes: [ session, user ]
+    fixed_params:
+      batch_size: 512
+    search_space:
+      hidden: { low: 200,    high: 800,    step: 100,  type: int }
+      latent: { low: 64,     high: 512,    step: 32,   type: int }
+      dropout: { low: 0.1,    high: 0.7,               type: float }
+      gamma: { low: 1.0e-4, high: 0.1,   log: true,  type: float }
+      lr: { low: 1.0e-4, high: 5.0e-3, log: true, type: float }
+      epochs: { low: 20,     high: 100,    step: 10,   type: int }
+      enc_steps: { choices: [ 1, 2, 3 ] }
+      dec_steps: { choices: [ 1, 2 ] }
+
+  multvae:
+    class: MultVAERecommender
+    module: recommenders.multvae
+    n_trials: 150
+    n_jobs: 2
+    urm_modes: [ session, user ]
+    fixed_params:
+      batch_size: 512
+      total_anneal_steps: 200000
+      weight_decay: 1.0e-5
+    search_space:
+      hidden_dim: { low: 200,    high: 800,   step: 100,  type: int }
+      latent_dim: { low: 64,     high: 512,   step: 32,   type: int }
+      dropout: { low: 0.1,    high: 0.7,               type: float }
+      beta: { low: 0.05,   high: 0.5,   log: true,  type: float }
+      learning_rate: { low: 1.0e-4, high: 5.0e-3, log: true, type: float }
+      epochs: { low: 20,     high: 150,   step: 10,   type: int }
+      anneal_cap: { low: 0.05,   high: 0.5,               type: float }
+      use_icm: { choices: [ 0, 1 ] }
+      icm_weight: { low: 0.1, high: 0.8, type: float, conditional_on: { use_icm: 1 } }
+
+# Add other models from launchers_crossvalidation/configs/tune_crossvalidation.yaml
+# verbatim as needed (heuristic, slim_bpr, prod2vec, ...). Same model key →
+# same search space → directly comparable studies.
+
+  tfidf_cg:
+    class: TFIDFTextCG
+    module: recommenders.text_cg
+    inference_mode: text
+    n_trials: 300
+    n_jobs: 8
+    urm_modes: [ session ]
+    fixed_params: { }
+    search_space:
+      max_features: { low: 10000, high: 100000, step: 10000, type: int }
+      ngram_max: { choices: [ 1, 2 ] }
+      cf_weight: { low: 0.0, high: 0.8, type: float }
+
+  heuristic:
+    class: HeuristicRecommender
+    module: heuristic.heuristic_v0
+    n_trials: 400
+    n_jobs: 5
+    urm_modes: [session]
+    fixed_params: {}
+    search_space:
+      album_last:   {low: 0.0,  high: 10.0,            type: float}
+      artist_last:  {low: 0.0,  high: 10.0,            type: float}
+      album_any:    {low: 0.0,  high: 10.0,            type: float}
+      artist_any:   {low: 0.0,  high: 10.0,            type: float}
+      year:         {low: 0.0,  high: 10.0,            type: float}
+      pop_match:    {low: 0.0,  high: 10.0,            type: float}
+      pop_z:        {low: 0.0,  high: 10.0,            type: float}
+      cat_A:        {low: 0.2,  high: 10.0,            type: float}
+      cat_B:        {low: 0.2,  high: 10.0,            type: float}
+      cat_C:        {low: 0.2,  high: 10.0,            type: float}
+      cat_D:        {low: 0.2,  high: 10.0,            type: float}
+      cat_E:        {low: 0.2,  high: 10.0,            type: float}
+      cat_F:        {low: 0.2,  high: 10.0,            type: float}
+      cat_G:        {low: 0.2,  high: 10.0,            type: float}
+      cat_H:        {low: 0.2,  high: 10.0,            type: float}
+      cat_I:        {low: 0.2,  high: 10.0,            type: float}
+      cat_J:        {low: 0.2,  high: 10.0,            type: float}
+      cat_K:        {low: 0.2,  high: 10.0,            type: float}
+      spec_HH:      {low: 0.2,  high: 10.0,            type: float}
+      spec_LH:      {low: 0.2,  high: 10.0,            type: float}
+      spec_HL:      {low: 0.2,  high: 10.0,            type: float}
+      spec_LL:      {low: 0.2,  high: 10.0,            type: float}
+      decade_top_n: {low: 50,   high: 1000, log: true, type: int}
+
+  # heuristic_v0 pool + scoring + cat/spec boost, with a precomputed
+  # HybridAllQwen fallback filling v0's 3 give-up slots (no-prior / empty-pool /
+  # shortfall). Fallback = the already-tuned, already-exported HybridAllQwen
+  # candidate parquets (fold_*_oof_cg_val / _oof_reranker_val / holdout / blind),
+  # loaded once at fit and indexed by (session_id, turn). No GPU, no recompute;
+  # only the 23 v0 heuristic weights are tuned. inference_mode = standard.
+  heuristic_v2_hybrid:
+    class: HeuristicV2Hybrid
+    module: heuristic.heuristic_v2_hybrid
+    n_trials: 400
+    n_jobs: 5
+    urm_modes: [session]
+    uses_icm: false          # no ICM consumed → skip the per-fold ICM prebuild
+    fixed_params:
+      # HybridAllQwen export dir — covers every split the pipeline infers on:
+      # cg_val (tuning), reranker_val (PoSI), holdout + blind (export).
+      fallback_datasets_dir: models/CG_crossvalidation/hybrid_all_qwen_session_dro/datasets
+      fallback_out_n: 200
+    search_space:
+      album_last:   {low: 0.0,  high: 10.0,            type: float}
+      artist_last:  {low: 0.0,  high: 10.0,            type: float}
+      album_any:    {low: 0.0,  high: 10.0,            type: float}
+      artist_any:   {low: 0.0,  high: 10.0,            type: float}
+      year:         {low: 0.0,  high: 10.0,            type: float}
+      pop_match:    {low: 0.0,  high: 10.0,            type: float}
+      pop_z:        {low: 0.0,  high: 10.0,            type: float}
+      cat_A:        {low: 0.2,  high: 10.0,            type: float}
+      cat_B:        {low: 0.2,  high: 10.0,            type: float}
+      cat_C:        {low: 0.2,  high: 10.0,            type: float}
+      cat_D:        {low: 0.2,  high: 10.0,            type: float}
+      cat_E:        {low: 0.2,  high: 10.0,            type: float}
+      cat_F:        {low: 0.2,  high: 10.0,            type: float}
+      cat_G:        {low: 0.2,  high: 10.0,            type: float}
+      cat_H:        {low: 0.2,  high: 10.0,            type: float}
+      cat_I:        {low: 0.2,  high: 10.0,            type: float}
+      cat_J:        {low: 0.2,  high: 10.0,            type: float}
+      cat_K:        {low: 0.2,  high: 10.0,            type: float}
+      spec_HH:      {low: 0.2,  high: 10.0,            type: float}
+      spec_LH:      {low: 0.2,  high: 10.0,            type: float}
+      spec_HL:      {low: 0.2,  high: 10.0,            type: float}
+      spec_LL:      {low: 0.2,  high: 10.0,            type: float}
+      decade_top_n: {low: 50,   high: 1000, log: true, type: int}
+
+  # heuristic_v0 RRF-fused with two precomputed small CGs (no longer fallback):
+  #   rrf_oneshot       (turn-1 only; oneshot RRF ensemble)
+  #   tower_cf_ensemble (all turns; session-DRO export)
+  # v0 contributes at fixed weight 1.0; the two cached-CG weights and rrf_k are
+  # tuned alongside the 23 v0 heuristic dims. Cached export parquets cover every
+  # split the pipeline infers on (cg_val / reranker_val / holdout / blind),
+  # loaded once at fit and indexed by (session_id, turn). No GPU, no recompute.
+  # inference_mode = standard.
+  heuristic_v3:
+    class: HeuristicV3
+    module: heuristic.heuristic_v3
+    n_trials: 400
+    n_jobs: 5
+    urm_modes: [session]
+    uses_icm: false          # no ICM consumed → skip the per-fold ICM prebuild
+    fixed_params:
+      rrf_oneshot_datasets_dir: models/CG_crossvalidation/rrf_oneshot/datasets
+      tower_cf_datasets_dir: models/CG_crossvalidation/tower_cf_ensemble_session_dro/datasets
+      fallback_out_n: 200
+    search_space:
+      album_last:   {low: 0.0,  high: 10.0,            type: float}
+      artist_last:  {low: 0.0,  high: 10.0,            type: float}
+      album_any:    {low: 0.0,  high: 10.0,            type: float}
+      artist_any:   {low: 0.0,  high: 10.0,            type: float}
+      year:         {low: 0.0,  high: 10.0,            type: float}
+      pop_match:    {low: 0.0,  high: 10.0,            type: float}
+      pop_z:        {low: 0.0,  high: 10.0,            type: float}
+      cat_A:        {low: 0.2,  high: 10.0,            type: float}
+      cat_B:        {low: 0.2,  high: 10.0,            type: float}
+      cat_C:        {low: 0.2,  high: 10.0,            type: float}
+      cat_D:        {low: 0.2,  high: 10.0,            type: float}
+      cat_E:        {low: 0.2,  high: 10.0,            type: float}
+      cat_F:        {low: 0.2,  high: 10.0,            type: float}
+      cat_G:        {low: 0.2,  high: 10.0,            type: float}
+      cat_H:        {low: 0.2,  high: 10.0,            type: float}
+      cat_I:        {low: 0.2,  high: 10.0,            type: float}
+      cat_J:        {low: 0.2,  high: 10.0,            type: float}
+      cat_K:        {low: 0.2,  high: 10.0,            type: float}
+      spec_HH:      {low: 0.2,  high: 10.0,            type: float}
+      spec_LH:      {low: 0.2,  high: 10.0,            type: float}
+      spec_HL:      {low: 0.2,  high: 10.0,            type: float}
+      spec_LL:      {low: 0.2,  high: 10.0,            type: float}
+      decade_top_n: {low: 50,   high: 1000, log: true, type: int}
+      w_rrf_oneshot: {low: 0.0, high: 10.0,            type: float}
+      w_tower_cf:    {low: 0.0, high: 10.0,            type: float}
+      rrf_k:         {low: 10,  high: 100,             type: int}
+
+  bm25_cg:
+    class: BM25TextCG
+    module: recommenders.text_cg
+    inference_mode: text
+    n_trials: 300
+    n_jobs: 8
+    urm_modes: [session]
+    fixed_params: {}
+    search_space:
+      k1:           {low: 0.5,   high: 3.0,             type: float}
+      b:            {low: 0.3,   high: 1.0,             type: float}
+      max_features: {low: 10000, high: 100000, step: 10000, type: int}
+      cf_weight:    {low: 0.0,   high: 0.8,             type: float}
+
+  # --- embedding-based CGs (frozen Qwen3 towers); mirrors the non-DRO config -
+  emb_item_knn_8b:
+    class: EmbeddingItemKNN
+    module: embedding_based.embedding_item_knn
+    n_trials: 120
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      # W_emb cache built once at cache_k from track_emb_dir (auto on first fit
+      # if emb_sim_path absent), trimmed to k at load.
+      emb_sim_path: models/embedding_sim/W_emb_qwen3_8b_k500.npz
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+      cache_k: 500
+      model_size: qwen3_8b
+      # SigLIP2 image blend: cache built once at img_cache_k (auto on first fit
+      # if absent), trimmed to img_k at load. parquet glob = build source.
+      img_sim_path: models/embedding_sim/W_img_siglip2_k500.npz
+      img_parquet_glob: data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-*.parquet
+      img_cache_k: 500
+      # tag-CBF cache: per-fold (interaction-pop is fold-dependent), content-hash
+      # keyed → one file per fold as W_cbf_8b__<hash>.npz, trimmed to k_icm at load.
+      icm_sim_path: models/embedding_sim/W_cbf_8b.npz
+      icm_cache_k: 500
+    search_space:
+      k:          {low: 5,  high: 500,  log: true,  type: int}
+      cf_weight:  {low: 0.0, high: 3.0,              type: float}
+      cf_k:       {low: 10,  high: 800,  log: true,  type: int}
+      shrink:     {low: 0.0, high: 1000.0,           type: float}
+      icm_weight: {low: 0.0, high: 3.0,              type: float}
+      k_icm:      {low: 10,  high: 500,  log: true,  type: int}
+      img_weight: {low: 0.0, high: 3.0,              type: float}
+      img_k:      {low: 5,  high: 500,  log: true,  type: int}
+
+  dense_query_8b:
+    class: DenseQueryCG
+    module: embedding_based.dense_query_cg
+    n_trials: 30
+    n_jobs: 1
+    urm_modes: [session]
+    uses_icm: false          # no ICM consumed → skip the per-fold ICM prebuild
+    fixed_params:
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      model_size: qwen3_8b
+    search_space:
+      max_future_years: {choices: [1.0, 2.0, 5.0, 100.0]}
+
+  # Self-contained content hybrid: TFIDF + BM25 + ICM + last_track + prev (decay
+  # over all prior turns) + query-emb→track, fused by RRF. Text-mode inference
+  # (sess_info carries query_text + query_emb + ctx_tracks).
+  hybrid_8b:
+    class: HybridCG
+    module: embedding_based.hybrid_cg
+    inference_mode: text
+    n_trials: 150
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+      model_size: qwen3_8b
+      # catalogue-global artefact cache (tower, TF-IDF, BM25 counts, W_cbf@cache_k):
+      # built once, reused by every trial + fold.
+      cache_dir: models/CG_crossvalidation/hybrid_8b/cache
+      icm_cache_k: 400
+    search_space:
+      k_rrf:            {low: 2,   high: 150,            type: int}
+      top_k_per_signal: {low: 300,   high: 2000,         type: int}
+      prev_decay:       {low: 0.0, high: 1.0,            type: float}
+      icm_k:            {low: 2,   high: 1000,           type: int}
+      w_tfidf:          {low: 0.0, high: 20.0,            type: float}
+      w_bm25:           {low: 0.0, high: 20.0,            type: float}
+      w_icm:            {low: 0.0, high: 20.0,            type: float}
+      w_last:           {low: 0.0, high: 20.0,            type: float}
+      w_prev:           {low: 0.0, high: 20.0,            type: float}
+      w_qemb:           {low: 0.0, high: 20.0,            type: float}
+      bm25_k1:          {low: 0.5, high: 30.0,            type: float}
+      bm25_b:           {low: 0.3, high: 20.0,            type: float}
+
+  # Multi-scale evolution of hybrid_8b: the last/prev embedding signals run over
+  # ALL THREE Qwen3 track towers (0.6B + 4B + 8B) simultaneously, each with its
+  # own RRF weights. query-emb→track stays 8B (single attached query bundle).
+  # The tuner decides if 0.6B/4B add anything — their weights can collapse to 0.
+  hybrid_all_qwen:
+    class: HybridAllQwen
+    module: embedding_based.hybrid_all_qwen
+    inference_mode: text
+    n_trials: 1000
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+      model_size: qwen3_8b
+      track_emb_dir_4b: models/retrieval_text_towers/Qwen__Qwen3-Embedding-4B/dense_tracks_len256_poollast
+      track_emb_dir_0p6b: models/retrieval_text_towers/Qwen__Qwen3-Embedding-0.6B/dense_tracks_len256_poollast
+      model_size_4b: qwen3_4b
+      model_size_0p6b: qwen3_0p6b
+      cache_dir: models/CG_crossvalidation/hybrid_all_qwen/cache
+      icm_cache_k: 400
+    search_space:
+      k_rrf:            {low: 2,   high: 150,            type: int}
+      top_k_per_signal: {low: 300,   high: 2000,         type: int}
+      prev_decay:       {low: 0.0, high: 1.0,            type: float}
+      icm_k:            {low: 2,   high: 1000,           type: int}
+      w_tfidf:          {low: 0.0, high: 20.0,            type: float}
+      w_bm25:           {low: 0.0, high: 20.0,            type: float}
+      w_icm:            {low: 0.0, high: 20.0,            type: float}
+      w_last:           {low: 0.0, high: 20.0,            type: float}
+      w_prev:           {low: 0.0, high: 20.0,            type: float}
+      w_qemb:           {low: 0.0, high: 20.0,            type: float}
+      w_last_4b:        {low: 0.0, high: 20.0,            type: float}
+      w_prev_4b:        {low: 0.0, high: 20.0,            type: float}
+      w_last_0p6b:      {low: 0.0, high: 20.0,            type: float}
+      w_prev_0p6b:      {low: 0.0, high: 20.0,            type: float}
+      bm25_k1:          {low: 0.5, high: 30.0,            type: float}
+      bm25_b:           {low: 0.3, high: 20.0,            type: float}
+
+  tower_ensemble:
+    class: TowerEnsembleCG
+    module: embedding_based.tower_ensemble
+    inference_mode: text
+    uses_icm: false
+    n_trials: 300
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      img_parquet_glob: data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-*.parquet
+      cache_dir: models/CG_crossvalidation/tower_ensemble_session_dro/cache
+    search_space:
+      d:                {choices: [128, 256]}
+      hidden:           {choices: [256, 512]}
+      epochs:           {low: 3,   high: 20,    type: int}
+      lr:               {low: 1.0e-4, high: 5.0e-3, log: true, type: float}
+      tau:              {low: 0.02, high: 0.1, type: float}
+      swag_k:           {choices: [0, 1, 3, 5, 10, 20, 30, 50]}
+      swag_max_rank:    {choices: [3, 5, 10, 15]}
+      swag_collect_every: {choices: [0, 1, 5, 20]}   # 0=per-epoch, N=every N steps
+      top_k_per_signal: {low: 300, high: 1000, type: int}
+      k_rrf:            {low: 5,   high: 80,   type: int}
+      w_towerA:         {low: 0.0, high: 3.0,  type: float}
+      w_towerB:         {low: 0.0, high: 3.0,  type: float}
+      w_dot:            {low: 0.0, high: 3.0,  type: float}
+      w_tfidf:          {low: 0.0, high: 3.0,  type: float}
+
+
+  # tower_ensemble + 1 extra cross-modal tower (same head_q(query8B)×head_t
+  # recipe as tower B): C=CF-BPR, read from the track-embedding parquet
+  # (img_parquet_glob, cf-bpr column). SWAG knobs shared by all 3 towers. One
+  # extra RRF weight (w_towerC) — a useless tower prunes to 0.
+  tower_cf_ensemble:
+    class: TowerCFEnsembleCG
+    module: embedding_based.tower_cf_ensemble
+    inference_mode: text
+    uses_icm: false
+    n_trials: 300
+    n_jobs: 1
+    urm_modes: [session]
+    fixed_params:
+      track_emb_dir: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B/dense_tracks_len256_poollast
+      query_cache_root: models/retrieval_text_towers/Qwen__Qwen3-Embedding-8B
+      img_parquet_glob: data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-*.parquet
+      cache_dir: models/CG_crossvalidation/tower_cf_ensemble_session_dro/cache
+      cf_column: cf-bpr
+    search_space:
+      d:                {choices: [128, 256]}
+      hidden:           {choices: [256, 512]}
+      epochs:           {low: 3,   high: 20,    type: int}
+      lr:               {low: 1.0e-4, high: 5.0e-3, log: true, type: float}
+      tau:              {low: 0.02, high: 0.1, type: float}
+      swag_k:           {choices: [0, 1, 3, 5, 10, 20, 30, 50]}
+      swag_max_rank:    {choices: [3, 5, 10, 15]}
+      swag_collect_every: {choices: [0, 1, 5, 20]}   # 0=per-epoch, N=every N steps
+      top_k_per_signal: {low: 300, high: 1000, type: int}
+      k_rrf:            {low: 5,   high: 80,   type: int}
+      w_towerA:         {low: 0.0, high: 10.0,  type: float}
+      w_towerB:         {low: 0.0, high: 10.0,  type: float}
+      w_towerC:         {low: 0.0, high: 10.0,  type: float}
+      w_dot:            {low: 0.0, high: 10.0,  type: float}
+      w_tfidf:          {low: 0.0, high: 10.0,  type: float}

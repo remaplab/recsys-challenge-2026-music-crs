@@ -1,0 +1,77 @@
+method: rrf
+top_k: 200
+score_input: minmax
+method_params:
+  k: 46
+turn_buckets:
+- name: t1
+  turns:
+  - 1
+- name: t2_5
+  turns:
+  - 2
+  - 3
+  - 4
+  - 5
+- name: t6_8
+  turns:
+  - 6
+  - 7
+  - 8
+weights:
+  bm25_colisten_oneshot:
+  - 0.23333489192798748
+  - 0.23152537688457903
+  - 0.000462512561303578
+  tower_a_oneshot:
+  - 0.4778502313821565
+  - 0.4659903762290525
+  - 0.00023319573504662484
+  emb_item_knn_8b_session_dro:
+  - 0.01092054750776847
+  - 0.21841292671724694
+  - 0.19442910428792243
+  hybrid_all_qwen_session_dro:
+  - 0.10524026599400457
+  - 0.01133041204766603
+  - 0.004058316588639639
+  tower_ensemble_session_dro:
+  - 0.00021557236656658072
+  - 0.00012309273700387987
+  - 0.05496154609991595
+  tower_cf_ensemble_session_dro:
+  - 0.0002316872951684416
+  - 0.00010010597972721861
+  - 0.24144858257372379
+  heuristic_v2_hybrid_session_dro:
+  - 0.0012964855589159658
+  - 0.00018185430332646313
+  - 0.010293028786200958
+  heuristic_v3_session_dro:
+  - 0.5921823192234451
+  - 0.590183040348167
+  - 0.0004913356908545264
+  query_full_multibehav_alltext_softor_session:
+  - 0.0011526661175014134
+  - 0.007471713916711399
+  - 0.0001014134584178043
+  query_full_multibehav_alltext_softor_session_ndcg:
+  - 0.06437494911252603
+  - 0.0009659745706856095
+  - 0.00017980618318188383
+  split_hidim_xattn_hardneg_query_full_dif_session_ndcg:
+  - 0.09520504012806459
+  - 0.07512735514965499
+  - 0.00010022836422791708
+  split_hidim_xattn_hardneg_query_full_nova_session_ndcg:
+  - 0.0053002645884506015
+  - 0.379022295737002
+  - 0.010906862839859258
+  split_hidim_xattn_hardneg_query_full_noiserobust_session:
+  - 0.02340874319512316
+  - 0.008155314573863313
+  - 0.010445446122016486
+  split_hidim_xattn_hardneg_session_ndcg:
+  - 0.004051355847245922
+  - 0.00010080145154563685
+  - 0.0016202729754178382

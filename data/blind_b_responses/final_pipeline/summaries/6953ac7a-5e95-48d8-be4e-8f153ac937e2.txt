@@ -1,0 +1,11 @@
+**Explicit Preferences**
+*   Tracks from the *Assassin's Creed Syndicate* soundtrack (composed by Austin Wintory).
+*   Atmospheric qualities: Tense, stealthy infiltration, grand, industrial melancholy, and the "darker side of London."
+*   High-stakes, intense chase or parkour vibes.
+*   Musical qualities: Urgency, forward momentum, and a breathless, thrilling, energetic pace.
+
+**Negative Preferences**
+*   Tracks that lack urgency or forward momentum (e.g., "Jokes Jokes Jokes").
+
+**Hard Constraints**
+*   Must be from the *Assassin's Creed Syndicate* OST.

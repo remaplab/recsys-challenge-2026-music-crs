@@ -1,0 +1,59 @@
+model: split_hidim_xattn_hardneg
+class: FeatureBert4RecIdentityCosineRoPEMMHICMSplitHiDimXAttnHardNegRecommender
+module: recommenders.feature_bert4rec_identity_cosine_rope_mmh_icm_split_hidim_xattn_hardneg
+urm_mode: session
+inference_mode: standard
+best_params:
+  batch_size: 256
+  hidden_size: 256
+  n_layers: 5
+  dropout: 0.29790160468516685
+  mask_prob: 0.35123644861398573
+  lr: 0.0024822041366077486
+  weight_decay: 0.0006765981181309161
+  init_tau: 0.07202060359310314
+  lr_final_factor: 0.028417798868764863
+  artist_dim: 128
+  album_dim: 384
+  tag_dim: 128
+  hardneg_k: 78
+  hardneg_weight: 0.7941619189600988
+  hardneg_tau: 0.0449687889017632
+fixed_params:
+  feature_emb_paths:
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00000-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00001-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00002-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks-00003-of-00004.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/test_tracks-00000-of-00001.parquet
+  - data/talkpl-ai/TalkPlayData-Challenge-Track-Embeddings/data/all_tracks_filled-00000-of-00001.parquet
+  feature_modalities:
+  - metadata-qwen3_embedding_0.6b
+  - cf-bpr
+  - audio-laion_clap
+  max_seq_len: 50
+  n_heads: 8
+  epochs: 200
+  warmup_ratio: 0.1
+  val_ratio: 0.1
+  early_stop_patience: 20
+  max_future_years: 0.0
+  icm_compressed_dim: 256
+  device: auto
+  early_stop_metric: ndcg
+  eval_min_turn: 2
+  eval_ndcg_k: 20
+cv_results:
+  primary_metric: ndcg@20
+  primary_value: 0.253833
+  ndcg:
+    20: 0.253833
+  recall:
+    20: 0.519163
+    200: 0.722146
+lb_selection:
+  lb_stat: cvar
+  fold_lb_value: 0.296096
+  fold_trial_number: 18
+  rank: 8
+  cv_lb_mean: 0.273965

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "n_sessions": 16259,
+  "n_folds": 5,
+  "holdout_target": 1000,
+  "seed_used_at_generation": 42,
+  "sha256_of_session_ids_sorted": "83257058691c56dc2f8ac1fe5a55f8f53f42e271b9a3a5ac42a2d05718299cf2",
+  "generated_at": "2026-06-08T19:10:34.639782Z",
+  "source_dir": "/mnt/Locale/Progetti/RecSys-challenge-2026/data/splitK_bak",
+  "note": "Bootstrapped from snapshot.",
+  "bucket_counts": {
+    "fold_0_cg_val": 2440,
+    "fold_0_reranker_val": 610,
+    "fold_1_cg_val": 2440,
+    "fold_1_reranker_val": 610,
+    "fold_2_cg_val": 2440,
+    "fold_2_reranker_val": 610,
+    "fold_3_cg_val": 2440,
+    "fold_3_reranker_val": 610,
+    "fold_4_cg_val": 2439,
+    "fold_4_reranker_val": 610,
+    "holdout": 1010
+  }
+}

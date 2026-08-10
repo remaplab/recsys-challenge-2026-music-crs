@@ -1,0 +1,11 @@
+**Explicit Preferences**
+* Aggressive metal/hardcore music
+
+**Negative Preferences**
+* Recommendations that do not include technical musical data (BPM and key)
+* Recommendations that only suggest the same artist (Wolfbrigade) without meeting technical criteria
+
+**Hard Constraints**
+* Tempo must be exactly 126.70 BPM
+* Musical key must be exactly G minor
+* Every recommendation must include its specific tempo and musical key data

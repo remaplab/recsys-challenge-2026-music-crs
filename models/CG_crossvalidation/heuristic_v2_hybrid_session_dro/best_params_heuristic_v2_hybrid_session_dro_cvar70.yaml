@@ -1,0 +1,57 @@
+class: HeuristicV2Hybrid
+module: heuristic.heuristic_v2_hybrid
+inference_mode: standard
+urm_mode: session
+robust:
+  mode: cvar
+  alpha: 0.7
+  metric: recall@200
+  strategy: calibrated
+study: heuristic_v2_hybrid_session_dro_cvar70
+best_trial: 31
+cv_score: 0.6351713787410114
+posi_score: 0.6460773441828956
+posi_per_fold:
+- 0.6951913737401326
+- 0.6775871322127185
+- 0.5970797202896226
+- 0.6005269250323558
+- 0.6600015696396487
+eb_survivors:
+- 30
+- 31
+- 36
+- 37
+- 69
+- 82
+- 83
+- 84
+- 102
+- 103
+best_params:
+  album_last: 7.783208812505608
+  artist_last: 8.05368198891969
+  album_any: 2.4501545720734152
+  artist_any: 8.840306269325472
+  year: 4.450713447157295
+  pop_match: 8.781165597452155
+  pop_z: 2.8239345359262087
+  cat_A: 8.853952264317982
+  cat_B: 7.001199217798176
+  cat_C: 7.431623752267109
+  cat_D: 4.045102302049177
+  cat_E: 5.916838260008998
+  cat_F: 6.265496671904932
+  cat_G: 4.622133257226931
+  cat_H: 5.295744414451097
+  cat_I: 7.022679776743699
+  cat_J: 7.087440786870109
+  cat_K: 5.224617009710928
+  spec_HH: 5.648002078593852
+  spec_LH: 5.417572281949719
+  spec_HL: 4.190189163388114
+  spec_LL: 5.37151649906894
+  decade_top_n: 50
+fixed_params:
+  fallback_datasets_dir: models/CG_crossvalidation/hybrid_all_qwen_session_dro/datasets
+  fallback_out_n: 200

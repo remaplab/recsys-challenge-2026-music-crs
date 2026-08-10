@@ -1,0 +1,11 @@
+**Explicit Preferences**
+* Songs with captivating, impactful, and powerful lyrics.
+* Lyrical themes: storytelling, deep emotions, introspection, self-discovery, overcoming struggles, finding inner strength, and romantic love.
+* Open to different artists and different musical genres.
+
+**Negative Preferences**
+* Songs where the focus is on the "general vibe" or beat rather than the lyrical content.
+* Repetitive recommendations of the same artist (Juanes).
+
+**Hard Constraints**
+* Lyrics must be the primary focus of the recommendation.

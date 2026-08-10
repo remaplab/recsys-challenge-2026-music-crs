@@ -1,0 +1,27 @@
+{
+  "base": "Given a music recommendation request, retrieve the most relevant track from the catalog. If the listener names a specific track, artist, album, year, or label, treat it as a hard constraint; otherwise retrieve tracks that best fit the described intent.",
+  "per_bucket": {
+    "AL": "Retrieve multiple tracks whose sound, instrumentation, and sonic texture match what the listener describes. Many tracks can satisfy this; favor variety within the described sonic profile.",
+    "AH": "The listener is trying to identify ONE specific track they remember by its sound or sonic energy. Treat every sonic and stylistic detail as a clue that disambiguates a single existing track; prioritize exact identification over variety.",
+    "BL": "Retrieve multiple tracks whose lyrical themes, narrative, or subject matter match what the listener describes. Many tracks qualify; favor thematic variety over a single answer.",
+    "BH": "The listener is recalling ONE specific track by an exact lyrical phrase, narrative, or storyline. Match the quoted or paraphrased lyrics as precisely as possible to identify that single track.",
+    "CL": "Retrieve multiple tracks whose mood and aesthetic match the visual/artistic vibe the listener describes. Since cover art itself is not available, lean on genre, mood, and stylistic descriptors in the metadata. Many tracks qualify.",
+    "CH": "The listener is identifying ONE specific album/track by describing its cover art in detail. Cover art is not directly available, so map the described visual aesthetic (colors, themes, mood) to the most likely single album via its style and metadata.",
+    "DL": "Retrieve multiple tracks that suit the activity, setting, or atmosphere described (e.g. studying, relaxing, a mood). Many tracks qualify; favor consistent fit to the situation over variety.",
+    "DH": "The listener wants tracks for ONE very specific situation or an exact named track. If a title/artist is named, identify it exactly; otherwise match the precise mood/context tightly.",
+    "EL": "The listener is exploring and refining open-endedly. Retrieve tracks that extend the current direction while offering gentle variety for continued discovery.",
+    "EH": "The listener is converging through guided refinement toward ONE key realization about a seed track. Retrieve tracks that sharpen the specific musical/lyrical element under discussion.",
+    "FL": "Retrieve multiple tracks satisfying the stated metadata characteristics (genre, era, label, vocal type, album). Many tracks qualify; treat named artists/labels/years as hard filters and the rest as preferences.",
+    "FH": "The listener is identifying ONE specific track/album/artist from a vague metadata memory (a sound, an era, a label, an aesthetic). Treat each metadata fragment as a constraint narrowing to a single existing release.",
+    "GL": "Retrieve multiple tracks matching the mood and emotional need expressed. Many tracks qualify; favor emotional consistency across a varied set.",
+    "GH": "The listener is recalling ONE specific track tied to a precise mood or memory. Use the emotional and sonic cues to identify that single track.",
+    "HL": "Retrieve multiple tracks by or stylistically aligned with the artist under discussion. The named artist's identity and catalog matter most; many tracks qualify.",
+    "HH": "The listener wants ONE specific track by a named artist (often by exact title). Prioritize the named artist and exact-title match above all else.",
+    "IL": "Retrieve multiple tracks matching the culture, region, language, or geographic theme described. Many tracks qualify; favor authentic regional/cultural fit.",
+    "IH": "The listener is identifying ONE specific track tied to a particular culture or place. Use the cultural/geographic cues to pinpoint a single track.",
+    "JL": "Retrieve multiple tracks that are popular or well-regarded within the described community or context (not just global charts). Respect any era named. Many tracks qualify.",
+    "JH": "The listener is identifying ONE specific track by its popularity/acclaim signal (an award, a chart placement, a 'song of the week'). Use that exact recognition cue to find the single track.",
+    "KL": "Retrieve multiple tracks from the era or decade described, capturing its characteristic sound. Many tracks qualify; favor period-authentic variety.",
+    "KH": "The listener is recalling ONE specific track from a particular era by its sound and period feel. Use the era and sonic cues to identify that single track."
+  }
+}

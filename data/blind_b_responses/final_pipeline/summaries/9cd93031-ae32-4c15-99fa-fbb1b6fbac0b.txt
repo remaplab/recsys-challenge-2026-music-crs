@@ -1,0 +1,13 @@
+**Explicit Preferences**
+* Introspective themes
+* Acoustic-driven rock
+* Melancholic but hopeful mood
+* Meaningful/thoughtful lyrics
+* Alternative rock vibe
+* Suitable for a "chill evening"
+
+**Negative Preferences**
+* None specified
+
+**Hard Constraints**
+* None specified

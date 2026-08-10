@@ -1,0 +1,9 @@
+**Explicit Preferences**
+* Migos (Artist)
+* 'Versace (Remix)' (Specific track)
+
+**Negative Preferences**
+* Any track other than 'Versace (Remix)' by Migos
+
+**Hard Constraints**
+* Must play the specific track 'Versace (Remix)' by Migos; no other tracks or recommendations are acceptable.

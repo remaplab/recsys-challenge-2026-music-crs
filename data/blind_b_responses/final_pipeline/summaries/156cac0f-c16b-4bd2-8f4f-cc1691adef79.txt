@@ -1,0 +1,14 @@
+**Explicit Preferences**
+* Genre: Indie pop, indie pop/rock, or alternative.
+* Mood/Vibe: Upbeat, bright, summery, catchy, and "earworm" quality.
+* Vocals: Male vocals.
+* Key Features: Prominent, iconic, and distinct hook (specifically whistling or a catchy synth line).
+* Popularity: Mainstream, well-known, radio hits, "song of the summer" style.
+* Reference Style: Similar to Foster The People.
+
+**Negative Preferences**
+* Ambient or downtempo music.
+* Underground electronic tracks.
+
+**Hard Constraints**
+* Era: Released/popular around 2010–2012.

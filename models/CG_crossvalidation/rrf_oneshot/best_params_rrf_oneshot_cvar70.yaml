@@ -1,0 +1,31 @@
+anchor_component: dense_text_8b
+best_cvar: 0.4926166666666666
+components:
+- dense_text_8b
+- dense_text_4b
+- dense_text_0p6b
+- tfidf
+- bm25
+- bm25f
+- char_ngram
+- entity_match
+- bm25_colisten
+- tower_a
+- tower_b
+- tower_c
+- tower_audioclap
+fuse_top_k: 200
+weights:
+  k_rrf: 82
+  w_bm25: 0.002427402900833612
+  w_bm25_colisten: 3.0773444227115254
+  w_bm25f: 0.3662209886469869
+  w_char_ngram: 0.027128126802883536
+  w_dense_text_0p6b: 0.34417745671114636
+  w_dense_text_4b: 2.3019578888526246
+  w_entity_match: 0.3378738169926537
+  w_tfidf: 0.0036019153611521835
+  w_tower_a: 9.570445215131858
+  w_tower_audioclap: 0.10716333144307055
+  w_tower_b: 1.870644066797762
+  w_tower_c: 3.4922558074165955
