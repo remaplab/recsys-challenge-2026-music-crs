@@ -64,6 +64,11 @@ Specifically, our system consists of the following modules:
 
 This decoupled approach effectively handles the severe item cold-start problem while maintaining high-quality text generation, **earning the 1st place on the final Blind-B leaderboard**.
 
+## Checkpoints
+
+All trained checkpoints are available on Hugging Face: **[checkpoints](https://huggingface.co/datasets/NicoloLocatelli/RecSys_ACM_2026_Hallucinated)**.
+
+
 ## Reproducibility
 ### Step 1: Download the full challenge datasets to obtail the following structure
 
